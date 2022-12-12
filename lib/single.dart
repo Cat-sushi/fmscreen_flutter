@@ -90,17 +90,17 @@ class ScreeningResultWidget extends ConsumerWidget {
       return Container();
     }
     return Column(children: [
-      const QueryStatusWidget(),
+      QueryStatusWidget(result),
       const SizedBox(height: 8.0),
       Expanded(
         child: Row(
-          children: const <Widget>[
+          children: <Widget>[
             Expanded(
-              child: DetctedItemsWidget(),
+              child: DetctedItemsWidget(result),
             ),
-            SizedBox(width: 8.0),
+            const SizedBox(width: 8.0),
             Expanded(
-              child: DetectedItemsDetailWidget(),
+              child: DetectedItemsDetailWidget(result),
             ),
           ],
         ),
@@ -110,9 +110,12 @@ class ScreeningResultWidget extends ConsumerWidget {
 }
 
 class QueryStatusWidget extends ConsumerWidget {
-  const QueryStatusWidget({
+  const QueryStatusWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
+
+  final ScreeningResult result;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -123,32 +126,32 @@ class QueryStatusWidget extends ConsumerWidget {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          const InputStringWidget(),
+          InputStringWidget(result),
           const SizedBox(height: 4),
-          const NormalizedQueryWidget(),
+          NormalizedQueryWidget(result),
           const SizedBox(height: 4),
-          const PreprocessedQueryWidget(),
+          PreprocessedQueryWidget(result),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
-            children: const [
-              QueryScoreWidget(),
-              SizedBox(width: 8),
-              QueryStartTimeWidget(),
-              SizedBox(width: 8),
-              QueryDurationWidget(),
-              SizedBox(width: 8),
-              DbVersionWidget(),
-              SizedBox(width: 8),
-              ServerIdWidget(),
-              SizedBox(width: 8),
-              PerfectMatchingWidget(),
-              SizedBox(width: 8),
-              QueryFallenBackWidget(),
+            children: [
+              QueryScoreWidget(result),
+              const SizedBox(width: 8),
+              QueryStartTimeWidget(result),
+              const SizedBox(width: 8),
+              QueryDurationWidget(result),
+              const SizedBox(width: 8),
+              DbVersionWidget(result),
+              const SizedBox(width: 8),
+              ServerIdWidget(result),
+              const SizedBox(width: 8),
+              PerfectMatchingWidget(result),
+              const SizedBox(width: 8),
+              QueryFallenBackWidget(result),
             ],
           ),
           const SizedBox(height: 4),
-          const ServerMessageWidget(),
+          ServerMessageWidget(result),
         ],
       ),
     );
@@ -156,9 +159,12 @@ class QueryStatusWidget extends ConsumerWidget {
 }
 
 class InputStringWidget extends ConsumerWidget {
-  const InputStringWidget({
+  const InputStringWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
+
+  final ScreeningResult result;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -172,8 +178,7 @@ class InputStringWidget extends ConsumerWidget {
               color: const Color.fromRGBO(251, 253, 255, 1.0),
             ),
             padding: const EdgeInsets.all(4),
-            child: SelectableText(
-                ref.watch(resultProvider)!.queryStatus.inputString),
+            child: SelectableText(result.queryStatus.inputString),
           ),
         ),
       ],
@@ -182,9 +187,12 @@ class InputStringWidget extends ConsumerWidget {
 }
 
 class NormalizedQueryWidget extends ConsumerWidget {
-  const NormalizedQueryWidget({
+  const NormalizedQueryWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
+
+  final ScreeningResult result;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -198,8 +206,7 @@ class NormalizedQueryWidget extends ConsumerWidget {
               color: const Color.fromRGBO(251, 253, 255, 1.0),
             ),
             padding: const EdgeInsets.all(4),
-            child:
-                SelectableText(ref.watch(resultProvider)!.queryStatus.rawQuery),
+            child: SelectableText(result.queryStatus.rawQuery),
           ),
         ),
       ],
@@ -208,13 +215,15 @@ class NormalizedQueryWidget extends ConsumerWidget {
 }
 
 class PreprocessedQueryWidget extends ConsumerWidget {
-  const PreprocessedQueryWidget({
+  const PreprocessedQueryWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var result = ref.watch(resultProvider)!;
     var terms = <TextSpan>[];
     for (var term in result.queryStatus.terms) {
       var front = result.queryStatus.letType == LetType.postfix &&
@@ -262,13 +271,16 @@ class PreprocessedQueryWidget extends ConsumerWidget {
 }
 
 class QueryScoreWidget extends ConsumerWidget {
-  const QueryScoreWidget({
+  const QueryScoreWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var score = ref.watch(resultProvider)!.queryStatus.queryScore * 100;
+    var score = result.queryStatus.queryScore * 100;
     var scoreString = score.floor().toString();
     return Row(
       children: [
@@ -287,13 +299,16 @@ class QueryScoreWidget extends ConsumerWidget {
 }
 
 class QueryStartTimeWidget extends ConsumerWidget {
-  const QueryStartTimeWidget({
+  const QueryStartTimeWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var start = ref.watch(resultProvider)!.queryStatus.start.toIso8601String();
+    var start = result.queryStatus.start.toIso8601String();
     var startSort =
         '${start.substring(0, 4)}${start.substring(5, 7)}${start.substring(8, 10)}T'
         '${start.substring(11, 13)}${start.substring(14, 16)}${start.substring(17, 19)}Z';
@@ -314,14 +329,16 @@ class QueryStartTimeWidget extends ConsumerWidget {
 }
 
 class QueryDurationWidget extends ConsumerWidget {
-  const QueryDurationWidget({
+  const QueryDurationWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var duration =
-        ref.watch(resultProvider)!.queryStatus.durationInMilliseconds / 1000;
+    var duration = result.queryStatus.durationInMilliseconds / 1000;
     return Row(
       children: [
         const Text('Duration: '),
@@ -339,13 +356,16 @@ class QueryDurationWidget extends ConsumerWidget {
 }
 
 class DbVersionWidget extends ConsumerWidget {
-  const DbVersionWidget({
+  const DbVersionWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var a = ref.watch(resultProvider)!.queryStatus.databaseVersion;
+    var a = result.queryStatus.databaseVersion;
     var dbver = a
         .replaceAll('T', '')
         .replaceAll('-', '')
@@ -368,9 +388,12 @@ class DbVersionWidget extends ConsumerWidget {
 }
 
 class ServerIdWidget extends ConsumerWidget {
-  const ServerIdWidget({
+  const ServerIdWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
+
+  final ScreeningResult result;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -383,8 +406,7 @@ class ServerIdWidget extends ConsumerWidget {
             border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
             color: const Color.fromRGBO(251, 253, 255, 1.0),
           ),
-          child:
-              Text(ref.watch(resultProvider)!.queryStatus.serverId.toString()),
+          child: Text(result.queryStatus.serverId.toString()),
         ),
       ],
     );
@@ -392,13 +414,16 @@ class ServerIdWidget extends ConsumerWidget {
 }
 
 class PerfectMatchingWidget extends ConsumerWidget {
-  const PerfectMatchingWidget({
+  const PerfectMatchingWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var pf = ref.watch(resultProvider)!.queryStatus.perfectMatching;
+    var pf = result.queryStatus.perfectMatching;
     return Chip(
       label: Text('Perfect',
           style: TextStyle(
@@ -409,13 +434,16 @@ class PerfectMatchingWidget extends ConsumerWidget {
 }
 
 class QueryFallenBackWidget extends ConsumerWidget {
-  const QueryFallenBackWidget({
+  const QueryFallenBackWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var fb = ref.watch(resultProvider)!.queryStatus.queryFallenBack;
+    var fb = result.queryStatus.queryFallenBack;
     return Chip(
       label: Text('Fallen Back',
           style: TextStyle(
@@ -426,9 +454,12 @@ class QueryFallenBackWidget extends ConsumerWidget {
 }
 
 class ServerMessageWidget extends ConsumerWidget {
-  const ServerMessageWidget({
+  const ServerMessageWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
+
+  final ScreeningResult result;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -442,8 +473,7 @@ class ServerMessageWidget extends ConsumerWidget {
               border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
               color: const Color.fromRGBO(251, 253, 255, 1.0),
             ),
-            child:
-                SelectableText(ref.watch(resultProvider)!.queryStatus.message),
+            child: SelectableText(result.queryStatus.message),
           ),
         ),
       ],
@@ -452,13 +482,16 @@ class ServerMessageWidget extends ConsumerWidget {
 }
 
 class DetctedItemsWidget extends ConsumerWidget {
-  const DetctedItemsWidget({
+  const DetctedItemsWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var itemCount = ref.watch(resultProvider)!.detectedItems.length;
+    var itemCount = result.detectedItems.length;
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
@@ -481,7 +514,7 @@ class DetctedItemsWidget extends ConsumerWidget {
               child: ListView.builder(
                 itemCount: itemCount + 1,
                 itemBuilder: ((context, index) {
-                  return DetectedItemWidget(index);
+                  return DetectedItemWidget(result, index);
                 }),
               ),
             ),
@@ -494,10 +527,13 @@ class DetctedItemsWidget extends ConsumerWidget {
 
 class DetectedItemWidget extends ConsumerWidget {
   const DetectedItemWidget(
+    this.result,
     index, {
     Key? key,
   })  : _index = index - 1,
         super(key: key);
+
+  final ScreeningResult result;
 
   static const scoreWidth = 50.0;
   static const codeWidth = 50.0;
@@ -531,14 +567,13 @@ class DetectedItemWidget extends ConsumerWidget {
         ],
       );
     }
-    var detectedIetms = ref.watch(resultProvider)!.detectedItems;
-    var queryScore = ref.watch(resultProvider)!.queryStatus.queryScore;
-    var selected = ref.watch(selectedIndexProvider);
-    var item = detectedIetms[_index];
-    var score = (item.matchedNames[0].score / queryScore * 100).floor();
+    var item = result.detectedItems[_index];
+    var score =
+        (item.matchedNames[0].score / result.queryStatus.queryScore * 100)
+            .floor();
     return Container(
       decoration: BoxDecoration(
-        color: _index == selected
+        color: _index == ref.watch(selectedIndexProvider)
             ? const Color.fromRGBO(251, 239, 223, 1.0)
             : const Color.fromRGBO(251, 253, 255, 1.0),
         border: const Border(
@@ -582,13 +617,16 @@ class DetectedItemWidget extends ConsumerWidget {
 }
 
 class DetectedItemsDetailWidget extends ConsumerWidget {
-  const DetectedItemsDetailWidget({
+  const DetectedItemsDetailWidget(
+    this.result, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
+
   @override
   Widget build(BuildContext context, ref) {
-    var items = ref.watch(resultProvider)!.detectedItems;
+    var items = result.detectedItems;
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
@@ -599,7 +637,8 @@ class DetectedItemsDetailWidget extends ConsumerWidget {
           Expanded(
               child: ScrollablePositionedList.builder(
             itemCount: items.length,
-            itemBuilder: (context, index) => DetectedItemDetailWidget(index),
+            itemBuilder: (context, index) =>
+                DetectedItemDetailWidget(result, index),
             itemScrollController: itemScrollController,
             itemPositionsListener: itemPositionsListener,
           )),
@@ -611,10 +650,12 @@ class DetectedItemsDetailWidget extends ConsumerWidget {
 
 class DetectedItemDetailWidget extends ConsumerWidget {
   const DetectedItemDetailWidget(
+    this.result,
     this.index, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
   final int index;
 
   @override
@@ -641,7 +682,7 @@ class DetectedItemDetailWidget extends ConsumerWidget {
                   Row(
                     children: [
                       const SizedBox(width: 8),
-                      Expanded(child: MatchedNamesWidget(index)),
+                      Expanded(child: MatchedNamesWidget(result, index)),
                       const SizedBox(width: 8),
                     ],
                   ),
@@ -649,7 +690,7 @@ class DetectedItemDetailWidget extends ConsumerWidget {
                   Row(
                     children: [
                       const SizedBox(width: 8),
-                      Expanded(child: BodyWidget(index)),
+                      Expanded(child: BodyWidget(result, index)),
                       const SizedBox(width: 8),
                     ],
                   ),
@@ -664,16 +705,18 @@ class DetectedItemDetailWidget extends ConsumerWidget {
 
 class MatchedNamesWidget extends ConsumerWidget {
   const MatchedNamesWidget(
+    this.result,
     this.index, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
   final int index;
 
   @override
   Widget build(BuildContext context, ref) {
-    var item = ref.watch(resultProvider)!.detectedItems[index];
-    var queryScore = ref.watch(resultProvider)!.queryStatus.queryScore;
+    var item = result.detectedItems[index];
+    var queryScore = result.queryStatus.queryScore;
     var rows = <TableRow>[];
     for (var name in item.matchedNames) {
       var score = (name.score / queryScore * 100).floor();
@@ -732,15 +775,17 @@ class MatchedNamesWidget extends ConsumerWidget {
 
 class BodyWidget extends ConsumerWidget {
   const BodyWidget(
+    this.result,
     this.index, {
     Key? key,
   }) : super(key: key);
 
+  final ScreeningResult result;
   final int index;
 
   @override
   Widget build(BuildContext context, ref) {
-    var item = ref.watch(resultProvider)!.detectedItems[index];
+    var item = result.detectedItems[index];
     var yamlString = json2yaml(item.body!).trimRight();
 
     return Column(children: [
