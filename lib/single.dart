@@ -465,11 +465,13 @@ class DetctedItemsWidget extends ConsumerWidget {
                   ElevatedButton(onPressed: () {}, child: const Text('PDF')),
                 ],
               )),
-          const Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: DetectedItemsTableWidget(),
+          Expanded(
+            child: SelectionArea(
+              child: ListView.builder(
+                itemCount: itemCount + 1,
+                itemBuilder: ((context, index) {
+                  return DetectedItemWidget(index);
+                }),
               ),
             ),
           ),
@@ -479,92 +481,91 @@ class DetctedItemsWidget extends ConsumerWidget {
   }
 }
 
-class DetectedItemsTableWidget extends ConsumerWidget {
-  const DetectedItemsTableWidget({
+class DetectedItemWidget extends ConsumerWidget {
+  const DetectedItemWidget(
+    index, {
     Key? key,
-  }) : super(key: key);
+  })  : _index = index - 1,
+        super(key: key);
+
+  static const scoreWidth = 50.0;
+  static const codeWidth = 50.0;
+  final int _index;
 
   @override
   Widget build(BuildContext context, ref) {
+    if (_index == -1) {
+      return Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4, top: 8),
+            child: Container(
+                width: scoreWidth,
+                alignment: Alignment.centerRight,
+                child: const Text('Score')),
+          ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4, top: 8),
+            child: Container(
+                width: codeWidth,
+                alignment: Alignment.bottomCenter,
+                child: const Text('Code')),
+          ),
+          const SizedBox(width: 8),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 4, top: 8),
+            child: Text('Best Matched Name of each item'),
+          ),
+        ],
+      );
+    }
     var detectedIetms = ref.watch(resultProvider)!.detectedItems;
     var queryScore = ref.watch(resultProvider)!.queryStatus.queryScore;
-    var rows = <TableRow>[];
     var selected = ref.watch(selectedIndexProvider);
-    for (var index = 0; index < detectedIetms.length; index++) {
-      var item = detectedIetms[index];
-      var score = (item.matchedNames[0].score / queryScore * 100).floor();
-      rows.add(TableRow(
-        decoration: BoxDecoration(
-          color: index == selected
-              ? const Color.fromRGBO(251, 239, 223, 1.0)
-              : const Color.fromRGBO(251, 253, 255, 1.0),
-          border: const Border(
-              bottom: BorderSide(color: Color.fromRGBO(239, 239, 239, 1))),
-        ),
+    var item = detectedIetms[_index];
+    var score = (item.matchedNames[0].score / queryScore * 100).floor();
+    return Container(
+      decoration: BoxDecoration(
+        color: _index == selected
+            ? const Color.fromRGBO(251, 239, 223, 1.0)
+            : const Color.fromRGBO(251, 253, 255, 1.0),
+        border: const Border(
+            bottom: BorderSide(color: Color.fromRGBO(239, 239, 239, 1))),
+      ),
+      child: Row(
         children: [
-          TableCell(
+          Container(
+              width: scoreWidth,
+              alignment: Alignment.topRight,
+              padding: const EdgeInsets.all(2),
+              child: Text('$score')),
+          const SizedBox(width: 8),
+          Container(
+              width: codeWidth,
+              alignment: Alignment.topCenter,
+              padding: const EdgeInsets.all(2),
+              child: Text(item.listCode)),
+          const SizedBox(width: 8),
+          Flexible(
+            fit: FlexFit.tight,
+            child: GestureDetector(
+              onTap: () {
+                ref.read(selectedIndexProvider.notifier).state =
+                    ref.read(selectedIndexProvider) == _index ? null : _index;
+                itemScrollController.scrollTo(
+                    index: _index,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOutCubic);
+              },
               child: Container(
-                  alignment: Alignment.topRight,
+                  alignment: Alignment.topLeft,
                   padding: const EdgeInsets.all(2),
-                  child: Text('$score'))),
-          const TableCell(child: SizedBox(width: 8)),
-          TableCell(
-              child: Container(
-                  alignment: Alignment.topCenter,
-                  padding: const EdgeInsets.all(2),
-                  child: Text(item.listCode))),
-          const TableCell(child: SizedBox(width: 8)),
-          TableCell(
-              child: GestureDetector(
-            onTap: () {
-              ref.read(selectedIndexProvider.notifier).state =
-                  ref.read(selectedIndexProvider) == index ? null : index;
-              itemScrollController.scrollTo(
-                  index: index,
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOutCubic);
-            },
-            child: Container(
-                alignment: Alignment.topLeft,
-                padding: const EdgeInsets.all(2),
-                child: Text(item.matchedNames[0].entry.string)),
-          )),
+                  child: Text(item.matchedNames[0].entry.string)),
+            ),
+          ),
         ],
-      ));
-    }
-
-    return Table(
-      columnWidths: const {
-        0: IntrinsicColumnWidth(),
-        1: FixedColumnWidth(8),
-        2: IntrinsicColumnWidth(),
-        3: FixedColumnWidth(8),
-        4: FlexColumnWidth(),
-      },
-      children: [
-        const TableRow(
-          children: [
-            TableCell(
-                child: Padding(
-              padding: EdgeInsets.only(bottom: 4),
-              child: Text('Score'),
-            )),
-            TableCell(child: SizedBox(width: 8)),
-            TableCell(
-                child: Padding(
-              padding: EdgeInsets.only(bottom: 4),
-              child: Text('Code'),
-            )),
-            TableCell(child: SizedBox(width: 8)),
-            TableCell(
-                child: Padding(
-              padding: EdgeInsets.only(bottom: 4),
-              child: Text('Best Matched Name of each item'),
-            )),
-          ],
-        ),
-        ...rows,
-      ],
+      ),
     );
   }
 }
@@ -610,39 +611,41 @@ class DetectedItemDetailWidget extends ConsumerWidget {
     var selected = ref.watch(selectedIndexProvider);
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: GestureDetector(
-        onTap: () {
-          ref.read(selectedIndexProvider.notifier).state =
-              ref.read(selectedIndexProvider) == index ? null : index;
-        },
-        child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(),
-              color: index == selected
-                  ? const Color.fromRGBO(237, 223, 207, 1.0)
-                  : const Color.fromRGBO(229, 237, 237, 1.0),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 8.0),
-                Row(
-                  children: [
-                    const SizedBox(width: 8),
-                    Expanded(child: MatchedNamesWidget(index)),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-                const SizedBox(height: 8.0),
-                Row(
-                  children: [
-                    const SizedBox(width: 8),
-                    Expanded(child: BodyWidget(index)),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-                const SizedBox(height: 8.0),
-              ],
-            )),
+      child: SelectionArea(
+        child: GestureDetector(
+          onTap: () {
+            ref.read(selectedIndexProvider.notifier).state =
+                ref.read(selectedIndexProvider) == index ? null : index;
+          },
+          child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(),
+                color: index == selected
+                    ? const Color.fromRGBO(237, 223, 207, 1.0)
+                    : const Color.fromRGBO(229, 237, 237, 1.0),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Expanded(child: MatchedNamesWidget(index)),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Expanded(child: BodyWidget(index)),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                ],
+              )),
+        ),
       ),
     );
   }
