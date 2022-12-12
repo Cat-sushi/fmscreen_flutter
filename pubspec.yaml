@@ -39,6 +39,8 @@ dependencies:
   flutter_riverpod: ^2.1.1
   fmscreen: ^1.0.0
   json2yaml: ^3.0.0
+  http: ^0.13.5
+  scrollable_positioned_list: ^0.3.5
 
 dev_dependencies:
   flutter_test:

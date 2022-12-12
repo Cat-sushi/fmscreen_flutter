@@ -1,22 +1,36 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
+import 'package:http/http.dart' as http;
 import 'package:json2yaml/json2yaml.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 final resultProvider = StateProvider<ScreeningResult?>((ref) => null);
-var httpClient = HttpClient();
+final selectedIndexProvider = StateProvider<int?>((ref) => null);
+
+final itemScrollController = ItemScrollController();
+final itemPositionsListener = ItemPositionsListener.create();
 
 Future<void> screen(String input, WidgetRef ref) async {
-  var queryEncoded = Uri.encodeComponent(input);
-  var path = '?c=1&v=1&q=$queryEncoded';
-  var request = await httpClient.get('localhost', 8080, path);
-  var response = await request.close();
-  var jsonString = await response.transform(utf8.decoder).join();
+  var uri = Uri(
+      scheme: 'http',
+      host: 'localhost',
+      port: 8080,
+      path: '/',
+      queryParameters: {'c': '1', 'v': '1', 'q': input});
+  http.Response response;
+  try {
+    response = await http.get(uri);
+  } catch (e) {
+    ref.read(resultProvider.notifier).state =
+        ScreeningResult.fromMessage('Server not responding.');
+    return;
+  }
+  var jsonString = response.body;
   var jsonObject = json.decode(jsonString);
   var result = ScreeningResult.fromJson(jsonObject);
   ref.read(resultProvider.notifier).state = result;
@@ -42,6 +56,28 @@ class SingleScreen extends ConsumerWidget {
   }
 }
 
+class QueryInputWidget extends ConsumerWidget {
+  const QueryInputWidget({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return TextField(
+      autofocus: true,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        labelText: 'Name for screening',
+      ),
+      onSubmitted: (input) {
+        ref.read(resultProvider.notifier).state = null;
+        ref.read(selectedIndexProvider.notifier).state = null;
+        unawaited(screen(input, ref));
+      },
+    );
+  }
+}
+
 class ScreeningResultWidget extends ConsumerWidget {
   const ScreeningResultWidget({
     Key? key,
@@ -58,11 +94,11 @@ class ScreeningResultWidget extends ConsumerWidget {
       const SizedBox(height: 8.0),
       Expanded(
         child: Row(
-          children: <Widget>[
-            const Expanded(
+          children: const <Widget>[
+            Expanded(
               child: DetctedItemsWidget(),
             ),
-            const SizedBox(width: 8.0),
+            SizedBox(width: 8.0),
             Expanded(
               child: DetectedItemsDetailWidget(),
             ),
@@ -70,26 +106,6 @@ class ScreeningResultWidget extends ConsumerWidget {
         ),
       ),
     ]);
-  }
-}
-
-class QueryInputWidget extends ConsumerWidget {
-  const QueryInputWidget({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return TextField(
-      autofocus: true,
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-        labelText: 'Name for screening',
-      ),
-      onSubmitted: (input) {
-        unawaited(screen(input, ref));
-      },
-    );
   }
 }
 
@@ -373,11 +389,12 @@ class PerfectMatchingWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    var pf = ref.watch(resultProvider)!.queryStatus.perfectMatching;
     return Chip(
-      label: const Text('Perfect'), // TODO
-      avatar: ref.watch(resultProvider)!.queryStatus.perfectMatching
-          ? const Icon(Icons.check_circle)
-          : null,
+      label: Text('Perfect',
+          style: TextStyle(
+              color: pf ? null : const Color.fromRGBO(192, 192, 192, 1.0))),
+      avatar: pf ? const Icon(Icons.check_circle) : null,
     );
   }
 }
@@ -389,11 +406,12 @@ class QueryFallenBackWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    var fb = ref.watch(resultProvider)!.queryStatus.queryFallenBack;
     return Chip(
-      label: const Text('Fallen Back'), // TODO
-      avatar: ref.watch(resultProvider)!.queryStatus.queryFallenBack
-          ? const Icon(Icons.check_circle)
-          : null,
+      label: Text('Fallen Back',
+          style: TextStyle(
+              color: fb ? null : const Color.fromRGBO(192, 192, 192, 1.0))),
+      avatar: fb ? const Icon(Icons.check_circle) : null,
     );
   }
 }
@@ -443,7 +461,7 @@ class DetctedItemsWidget extends ConsumerWidget {
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('$itemCount item(s) detected'),
+                  Text('$itemCount item${itemCount > 1 ? 's' : ''} detected'),
                   ElevatedButton(onPressed: () {}, child: const Text('PDF')),
                 ],
               )),
@@ -471,12 +489,16 @@ class DetectedItemsTableWidget extends ConsumerWidget {
     var detectedIetms = ref.watch(resultProvider)!.detectedItems;
     var queryScore = ref.watch(resultProvider)!.queryStatus.queryScore;
     var rows = <TableRow>[];
-    for (var item in detectedIetms) {
+    var selected = ref.watch(selectedIndexProvider);
+    for (var index = 0; index < detectedIetms.length; index++) {
+      var item = detectedIetms[index];
       var score = (item.matchedNames[0].score / queryScore * 100).floor();
       rows.add(TableRow(
-        decoration: const BoxDecoration(
-          color: Color.fromRGBO(251, 253, 255, 1.0),
-          border: Border(
+        decoration: BoxDecoration(
+          color: index == selected
+              ? const Color.fromRGBO(251, 239, 223, 1.0)
+              : const Color.fromRGBO(251, 253, 255, 1.0),
+          border: const Border(
               bottom: BorderSide(color: Color.fromRGBO(239, 239, 239, 1))),
         ),
         children: [
@@ -485,16 +507,28 @@ class DetectedItemsTableWidget extends ConsumerWidget {
                   alignment: Alignment.topRight,
                   padding: const EdgeInsets.all(2),
                   child: Text('$score'))),
+          const TableCell(child: SizedBox(width: 8)),
           TableCell(
               child: Container(
                   alignment: Alignment.topCenter,
                   padding: const EdgeInsets.all(2),
                   child: Text(item.listCode))),
+          const TableCell(child: SizedBox(width: 8)),
           TableCell(
-              child: Container(
-                  alignment: Alignment.topLeft,
-                  padding: const EdgeInsets.all(2),
-                  child: Text(item.matchedNames[0].entry.string))),
+              child: GestureDetector(
+            onTap: () {
+              ref.read(selectedIndexProvider.notifier).state =
+                  ref.read(selectedIndexProvider) == index ? null : index;
+              itemScrollController.scrollTo(
+                  index: index,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOutCubic);
+            },
+            child: Container(
+                alignment: Alignment.topLeft,
+                padding: const EdgeInsets.all(2),
+                child: Text(item.matchedNames[0].entry.string)),
+          )),
         ],
       ));
     }
@@ -502,25 +536,29 @@ class DetectedItemsTableWidget extends ConsumerWidget {
     return Table(
       columnWidths: const {
         0: IntrinsicColumnWidth(),
-        1: IntrinsicColumnWidth(),
-        2: FlexColumnWidth(),
+        1: FixedColumnWidth(8),
+        2: IntrinsicColumnWidth(),
+        3: FixedColumnWidth(8),
+        4: FlexColumnWidth(),
       },
       children: [
         const TableRow(
           children: [
             TableCell(
                 child: Padding(
-              padding: EdgeInsets.only(right: 8, bottom: 4),
+              padding: EdgeInsets.only(bottom: 4),
               child: Text('Score'),
             )),
+            TableCell(child: SizedBox(width: 8)),
             TableCell(
                 child: Padding(
-              padding: EdgeInsets.only(right: 8, bottom: 4),
+              padding: EdgeInsets.only(bottom: 4),
               child: Text('Code'),
             )),
+            TableCell(child: SizedBox(width: 8)),
             TableCell(
                 child: Padding(
-              padding: EdgeInsets.only(right: 8, bottom: 4),
+              padding: EdgeInsets.only(bottom: 4),
               child: Text('Best Matched Name of each item'),
             )),
           ],
@@ -532,14 +570,13 @@ class DetectedItemsTableWidget extends ConsumerWidget {
 }
 
 class DetectedItemsDetailWidget extends ConsumerWidget {
-  DetectedItemsDetailWidget({
+  const DetectedItemsDetailWidget({
     Key? key,
   }) : super(key: key);
 
-  final _scrollController = ScrollController();
-
   @override
   Widget build(BuildContext context, ref) {
+    var items = ref.watch(resultProvider)!.detectedItems;
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
@@ -548,32 +585,20 @@ class DetectedItemsDetailWidget extends ConsumerWidget {
       child: Column(
         children: [
           Expanded(
-            child: Scrollbar(
-              controller: _scrollController,
-              child: CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      childCount:
-                          ref.watch(resultProvider)!.detectedItems.length,
-                      (context, index) {
-                        return QueryResultDetailWidget(index);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+              child: ScrollablePositionedList.builder(
+            itemCount: items.length,
+            itemBuilder: (context, index) => DetectedItemDetailWidget(index),
+            itemScrollController: itemScrollController,
+            itemPositionsListener: itemPositionsListener,
+          )),
         ],
       ),
     );
   }
 }
 
-class QueryResultDetailWidget extends ConsumerWidget {
-  const QueryResultDetailWidget(
+class DetectedItemDetailWidget extends ConsumerWidget {
+  const DetectedItemDetailWidget(
     this.index, {
     Key? key,
   }) : super(key: key);
@@ -582,34 +607,43 @@ class QueryResultDetailWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    var selected = ref.watch(selectedIndexProvider);
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(),
-            color: const Color.fromRGBO(229, 237, 237, 1.0),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Expanded(child: MatchedNamesWidget(index)),
-                  const SizedBox(width: 8),
-                ],
-              ),
-              const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Expanded(child: BodyWidget(index)),
-                  const SizedBox(width: 8),
-                ],
-              ),
-              const SizedBox(height: 8.0),
-            ],
-          )),
+      child: GestureDetector(
+        onTap: () {
+          ref.read(selectedIndexProvider.notifier).state =
+              ref.read(selectedIndexProvider) == index ? null : index;
+        },
+        child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(),
+              color: index == selected
+                  ? const Color.fromRGBO(237, 223, 207, 1.0)
+                  : const Color.fromRGBO(229, 237, 237, 1.0),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 8.0),
+                Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    Expanded(child: MatchedNamesWidget(index)),
+                    const SizedBox(width: 8),
+                  ],
+                ),
+                const SizedBox(height: 8.0),
+                Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    Expanded(child: BodyWidget(index)),
+                    const SizedBox(width: 8),
+                  ],
+                ),
+                const SizedBox(height: 8.0),
+              ],
+            )),
+      ),
     );
   }
 }
@@ -642,6 +676,7 @@ class MatchedNamesWidget extends ConsumerWidget {
                       alignment: Alignment.topRight,
                       padding: const EdgeInsets.all(2),
                       child: Text('$score'))),
+              const TableCell(child: SizedBox(width: 8)),
               TableCell(
                   child: Container(
                       alignment: Alignment.topLeft,
@@ -650,23 +685,28 @@ class MatchedNamesWidget extends ConsumerWidget {
             ]),
       );
     }
+
     return Table(
       columnWidths: const {
         0: IntrinsicColumnWidth(),
-        1: FlexColumnWidth(),
+        1: FixedColumnWidth(8),
+        2: FlexColumnWidth(),
       },
       children: [
-        const TableRow(
+        TableRow(
           children: [
-            TableCell(
+            const TableCell(
                 child: Padding(
-              padding: EdgeInsets.only(right: 8, bottom: 4),
+              padding: EdgeInsets.only(bottom: 4),
               child: Text('Score'),
             )),
+            const TableCell(child: SizedBox(width: 8)),
             TableCell(
                 child: Padding(
-              padding: EdgeInsets.only(right: 8, bottom: 4),
-              child: Text('Matched Names in this item'),
+              padding: const EdgeInsets.only(bottom: 4),
+              child:
+                  Text('Matched Name${item.matchedNames.length > 1 ? 's' : ''}'
+                      ' of this item'),
             )),
           ],
         ),
@@ -686,13 +726,13 @@ class BodyWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    var body = ref.watch(resultProvider)!.detectedItems[index].body!;
-    var yamlString = json2yaml(body).trimRight();
+    var item = ref.watch(resultProvider)!.detectedItems[index];
+    var yamlString = json2yaml(item.body!).trimRight();
     return Column(children: [
       Container(
         padding: const EdgeInsets.only(bottom: 4),
         alignment: Alignment.bottomLeft,
-        child: const Text('Item Body'),
+        child: Text('Item Body (${item.listCode})'),
       ),
       Container(
         color: const Color.fromRGBO(251, 253, 255, 1.0),
