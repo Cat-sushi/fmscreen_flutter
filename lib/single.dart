@@ -172,7 +172,8 @@ class InputStringWidget extends ConsumerWidget {
               color: const Color.fromRGBO(251, 253, 255, 1.0),
             ),
             padding: const EdgeInsets.all(4),
-            child: Text(ref.watch(resultProvider)!.queryStatus.inputString),
+            child: SelectableText(
+                ref.watch(resultProvider)!.queryStatus.inputString),
           ),
         ),
       ],
@@ -197,7 +198,8 @@ class NormalizedQueryWidget extends ConsumerWidget {
               color: const Color.fromRGBO(251, 253, 255, 1.0),
             ),
             padding: const EdgeInsets.all(4),
-            child: Text(ref.watch(resultProvider)!.queryStatus.rawQuery),
+            child:
+                SelectableText(ref.watch(resultProvider)!.queryStatus.rawQuery),
           ),
         ),
       ],
@@ -213,24 +215,29 @@ class PreprocessedQueryWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var result = ref.watch(resultProvider)!;
-    var terms = <Widget>[];
+    var terms = <TextSpan>[];
     for (var term in result.queryStatus.terms) {
-      var back = result.queryStatus.letType == LetType.postfix &&
+      var front = result.queryStatus.letType == LetType.postfix &&
                   term == result.queryStatus.terms.last ||
               result.queryStatus.letType == LetType.prefix &&
                   term == result.queryStatus.terms.first
-          ? const Color.fromRGBO(255, 247, 247, 1.0)
-          : const Color.fromRGBO(239, 255, 255, 1.0);
-      terms.add(Padding(
-        padding: const EdgeInsets.only(right: 4.0),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color.fromRGBO(207, 207, 207, 1.0)),
-            color: back,
-          ),
-          child: Text(term.string),
+          ? const Color.fromRGBO(0, 127, 127, 1.0)
+          : const Color.fromRGBO(0, 0, 0, 1.0);
+      terms.add(TextSpan(
+        style: TextStyle(
+          decorationStyle: TextDecorationStyle.solid,
+          decoration: TextDecoration.combine([
+            TextDecoration.underline,
+            TextDecoration.overline,
+          ]),
+          decorationColor: const Color(0xFF888888),
+          color: front,
         ),
+        text: term.string,
       ));
+      if (term != result.queryStatus.terms.last) {
+        terms.add(const TextSpan(text: ' '));
+      }
     }
     return Row(
       children: [
@@ -242,8 +249,10 @@ class PreprocessedQueryWidget extends ConsumerWidget {
                 border:
                     Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
                 color: const Color.fromRGBO(251, 253, 255, 1.0)),
-            child: Row(
-              children: terms,
+            child: SelectionArea(
+              child: SelectableText.rich(
+                TextSpan(children: terms),
+              ),
             ),
           ),
         ),
@@ -433,7 +442,8 @@ class ServerMessageWidget extends ConsumerWidget {
               border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
               color: const Color.fromRGBO(251, 253, 255, 1.0),
             ),
-            child: Text(ref.watch(resultProvider)!.queryStatus.message),
+            child:
+                SelectableText(ref.watch(resultProvider)!.queryStatus.message),
           ),
         ),
       ],
@@ -457,14 +467,15 @@ class DetctedItemsWidget extends ConsumerWidget {
       child: Column(
         children: [
           AppBar(
-              toolbarHeight: 40,
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('$itemCount item${itemCount > 1 ? 's' : ''} detected'),
-                  ElevatedButton(onPressed: () {}, child: const Text('PDF')),
-                ],
-              )),
+            toolbarHeight: 40,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('$itemCount item${itemCount > 1 ? 's' : ''} detected'),
+                ElevatedButton(onPressed: () {}, child: const Text('PDF')),
+              ],
+            ),
+          ),
           Expanded(
             child: SelectionArea(
               child: ListView.builder(
@@ -731,6 +742,7 @@ class BodyWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     var item = ref.watch(resultProvider)!.detectedItems[index];
     var yamlString = json2yaml(item.body!).trimRight();
+
     return Column(children: [
       Container(
         padding: const EdgeInsets.only(bottom: 4),
