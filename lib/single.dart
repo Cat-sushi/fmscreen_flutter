@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:json2yaml/json2yaml.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final resultProvider = StateProvider<ScreeningResult?>((ref) => null);
 final selectedIndexProvider = StateProvider<int?>((ref) => null);
@@ -224,28 +224,28 @@ class PreprocessedQueryWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    var terms = <TextSpan>[];
+    var spans = <TextSpan>[];
     for (var term in result.queryStatus.terms) {
-      var front = result.queryStatus.letType == LetType.postfix &&
+      var lineColor = result.queryStatus.letType == LetType.postfix &&
                   term == result.queryStatus.terms.last ||
               result.queryStatus.letType == LetType.prefix &&
                   term == result.queryStatus.terms.first
-          ? const Color.fromRGBO(0, 127, 127, 1.0)
-          : const Color.fromRGBO(0, 0, 0, 1.0);
-      terms.add(TextSpan(
+          ? const Color.fromRGBO(0, 191, 127, 1.0)
+          : const Color.fromRGBO(127, 127, 127, 1.0);
+      spans.add(TextSpan(
         style: TextStyle(
           decorationStyle: TextDecorationStyle.solid,
           decoration: TextDecoration.combine([
             TextDecoration.underline,
             TextDecoration.overline,
           ]),
-          decorationColor: const Color(0xFF888888),
-          color: front,
+          decorationColor: lineColor,
+          color: Colors.black,
         ),
         text: term.string,
       ));
-      if (term != result.queryStatus.terms.last) {
-        terms.add(const TextSpan(text: ' '));
+      if (!identical(term, result.queryStatus.terms.last)) {
+        spans.add(const TextSpan(text: ' '));
       }
     }
     return Row(
@@ -260,7 +260,7 @@ class PreprocessedQueryWidget extends ConsumerWidget {
                 color: const Color.fromRGBO(251, 253, 255, 1.0)),
             child: SelectionArea(
               child: SelectableText.rich(
-                TextSpan(children: terms),
+                TextSpan(children: spans),
               ),
             ),
           ),
@@ -309,7 +309,7 @@ class QueryStartTimeWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var start = result.queryStatus.start.toIso8601String();
-    var startSort =
+    var startShort =
         '${start.substring(0, 4)}${start.substring(5, 7)}${start.substring(8, 10)}T'
         '${start.substring(11, 13)}${start.substring(14, 16)}${start.substring(17, 19)}Z';
     return Row(
@@ -321,7 +321,7 @@ class QueryStartTimeWidget extends ConsumerWidget {
             border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
             color: const Color.fromRGBO(251, 253, 255, 1.0),
           ),
-          child: Text(startSort),
+          child: Text(startShort),
         ),
       ],
     );
@@ -366,11 +366,8 @@ class DbVersionWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var a = result.queryStatus.databaseVersion;
-    var dbver = a
-        .replaceAll('T', '')
-        .replaceAll('-', '')
-        .replaceAll(':', '')
-        .replaceAll('.000', '');
+    var dbver =
+        a.replaceAll('-', '').replaceAll(':', '').replaceAll('.000', '');
     return Row(
       children: [
         const Text('DB Ver.: '),
@@ -473,7 +470,10 @@ class ServerMessageWidget extends ConsumerWidget {
               border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
               color: const Color.fromRGBO(251, 253, 255, 1.0),
             ),
-            child: SelectableText(result.queryStatus.message),
+            child: SelectableText(
+              result.queryStatus.message,
+              style: const TextStyle(color: Color.fromARGB(255, 122, 44, 2)),
+            ),
           ),
         ),
       ],
@@ -505,7 +505,19 @@ class DetctedItemsWidget extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('$itemCount item${itemCount > 1 ? 's' : ''} detected'),
-                ElevatedButton(onPressed: () {}, child: const Text('PDF')),
+                ElevatedButton(
+                    onPressed: () async {
+                      var input =
+                          ref.read(resultProvider)!.queryStatus.inputString;
+                      var uri = Uri(
+                          scheme: 'http',
+                          host: 'localhost',
+                          port: 8080,
+                          path: '/pdf',
+                          queryParameters: {'c': '1', 'v': '1', 'q': input});
+                      unawaited(launchUrl(uri));
+                    },
+                    child: const Text('Get PDF')),
               ],
             ),
           ),
