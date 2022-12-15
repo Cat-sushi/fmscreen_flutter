@@ -1,14 +1,22 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class BatchScreen extends ConsumerWidget {
+  const BatchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return const Center(child: Text('TODO'));
+  }
+}
+/*
 import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:html';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_system_access_api/file_system_access_api.dart';
-
 import 'src/util.dart';
 
 final batchFileHandleProvider =
@@ -360,3 +368,4 @@ String formatOutput(int ix, ScreeningResult result) {
   }
   return csvLine.toString();
 }
+*/
