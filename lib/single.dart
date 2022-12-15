@@ -224,30 +224,6 @@ class PreprocessedQueryWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    var spans = <TextSpan>[];
-    for (var term in result.queryStatus.terms) {
-      var lineColor = result.queryStatus.letType == LetType.postfix &&
-                  term == result.queryStatus.terms.last ||
-              result.queryStatus.letType == LetType.prefix &&
-                  term == result.queryStatus.terms.first
-          ? const Color.fromRGBO(0, 191, 127, 1.0)
-          : const Color.fromRGBO(127, 127, 127, 1.0);
-      spans.add(TextSpan(
-        style: TextStyle(
-          decorationStyle: TextDecorationStyle.solid,
-          decoration: TextDecoration.combine([
-            TextDecoration.underline,
-            TextDecoration.overline,
-          ]),
-          decorationColor: lineColor,
-          color: Colors.black,
-        ),
-        text: term.string,
-      ));
-      if (!identical(term, result.queryStatus.terms.last)) {
-        spans.add(const TextSpan(text: ' '));
-      }
-    }
     return Row(
       children: [
         const Text('Preprocessed: '),
@@ -260,13 +236,39 @@ class PreprocessedQueryWidget extends ConsumerWidget {
                 color: const Color.fromRGBO(251, 253, 255, 1.0)),
             child: SelectionArea(
               child: SelectableText.rich(
-                TextSpan(children: spans),
+                TextSpan(children: [
+                  ...spans(result.queryStatus.terms, result.queryStatus.letType)
+                ]),
               ),
             ),
           ),
         ),
       ],
     );
+  }
+}
+
+Iterable<TextSpan> spans(List<Term> terms, LetType letType) sync* {
+  for (var term in terms) {
+    var lineColor = letType == LetType.postfix && term == terms.last ||
+            letType == LetType.prefix && term == terms.first
+        ? const Color.fromRGBO(0, 191, 127, 1.0)
+        : const Color.fromRGBO(127, 127, 127, 1.0);
+    yield TextSpan(
+      style: TextStyle(
+        decorationStyle: TextDecorationStyle.solid,
+        decoration: TextDecoration.combine([
+          TextDecoration.underline,
+          TextDecoration.overline,
+        ]),
+        decorationColor: lineColor,
+        color: Colors.black,
+      ),
+      text: term.string,
+    );
+    if (!identical(term, terms.last)) {
+      yield const TextSpan(text: ' ');
+    }
   }
 }
 
@@ -309,9 +311,7 @@ class QueryStartTimeWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var start = result.queryStatus.start.toIso8601String();
-    var startShort =
-        '${start.substring(0, 4)}${start.substring(5, 7)}${start.substring(8, 10)}T'
-        '${start.substring(11, 13)}${start.substring(14, 16)}${start.substring(17, 19)}Z';
+    var startShort = '${start.substring(0,19)}Z';
     return Row(
       children: [
         const Text('Start: '),
@@ -366,8 +366,7 @@ class DbVersionWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var a = result.queryStatus.databaseVersion;
-    var dbver =
-        a.replaceAll('-', '').replaceAll(':', '').replaceAll('.000', '');
+    var dbver ='${a.substring(0,19)}Z';
     return Row(
       children: [
         const Text('DB Ver.: '),
