@@ -23,7 +23,7 @@ final _lineSpritter = RegExp(r'\r\n|\r|\n', unicode: true);
 
 const utf8Bom = [0xEF, 0xBB, 0xBF];
 
-List<List<String?>> readCsvLines(String file) {
+List<List<String?>> parseCsvLines(String file) {
   var lines =  file.split(_lineSpritter);
   var buff = <List<String?>>[];
   var row = '';
