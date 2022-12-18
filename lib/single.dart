@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:input_history_text_field/input_history_text_field.dart';
 import 'package:json2yaml/json2yaml.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -63,8 +64,11 @@ class QueryInputWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return TextField(
+    return InputHistoryTextField(
+      historyKey: 'inputstring',
+      limit: 20,
       autofocus: true,
+      maxLines: 1,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
         labelText: 'Name for screening',
