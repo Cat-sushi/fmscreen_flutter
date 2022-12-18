@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BatchScreen extends ConsumerWidget {
-  const BatchScreen({super.key});
+// class BatchScreen extends ConsumerWidget {
+//   const BatchScreen({super.key});
 
-  @override
-  Widget build(BuildContext context, ref) {
-    return const Center(child: Text('TODO'));
-  }
-}
-/*
 import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
@@ -17,24 +11,14 @@ import 'dart:html';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_system_access_api/file_system_access_api.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'src/util.dart';
 
-final batchFileHandleProvider =
-    StateProvider<FileSystemFileHandle?>((ref) => null);
-final batchFileProvider = StateProvider<String?>((ref) => null);
-
-final whiteFileHandleProvider =
-    StateProvider<FileSystemFileHandle?>((ref) => null);
-final whiteFileProvider = StateProvider<String?>((ref) => null);
-
-final resultFileHandleProvider =
-    StateProvider<FileSystemFileHandle?>((ref) => null);
-
-final logFileHandleProvider =
-    StateProvider<FileSystemFileHandle?>((ref) => null);
-
+final batchDirNameProvider = StateProvider<String>((ref) => '');
 final messageProvider = StateProvider<List<String>>((ref) => []);
-
+final itemScrollController = ItemScrollController();
+final itemPositionsListener = ItemPositionsListener.create();
+FileSystemWritableFileStream? logStream;
 final isRunningProvider = StateProvider<bool>((ref) => false);
 
 late DateTime startTime;
@@ -42,7 +26,6 @@ late DateTime currentLap;
 late DateTime lastLap;
 
 var bulkSize = 100;
-var lc = 0;
 var cacheHits = 0;
 var cacheHits2 = 0;
 
@@ -51,64 +34,29 @@ class BatchScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    var batchFileName = ref.watch(batchFileHandleProvider)?.name ?? '';
-    var whiteFileName = ref.watch(whiteFileHandleProvider)?.name ?? '';
-    var resultFileName = ref.watch(resultFileHandleProvider)?.name ?? '';
-    var logFileName = ref.watch(logFileHandleProvider)?.name ?? '';
     var isRunning = ref.watch(isRunningProvider);
-    var runIsActive = batchFileName != '' &&
-        whiteFileName != '' &&
-        resultFileName != '' &&
-        logFileName != '' &&
-        !isRunning;
+    var batchDirName = ref.watch(batchDirNameProvider);
     return Column(
       children: [
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: () => unawaited(batchFilePick(ref)),
-              child: const Text('Select Batch File'),
-            ),
-            Expanded(child: Text(batchFileName)),
-          ],
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              ElevatedButton(
+                onPressed:
+                    isRunning ? null : () => unawaited(batchDirPick(ref)),
+                child: const Text('Select Batch Directory'),
+              ),
+              const SizedBox(width: 8.0),
+              Expanded(child: Text(batchDirName)),
+            ],
+          ),
         ),
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: () => unawaited(whiteFilePick(ref)),
-              child: const Text('Select White Result File'),
-            ),
-            Expanded(child: Text(whiteFileName)),
-          ],
-        ),
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: () => unawaited(resultFilePick(ref)),
-              child: const Text('Select Result File'),
-            ),
-            Expanded(child: Text(resultFileName)),
-          ],
-        ),
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: () => unawaited(logFilePick(ref)),
-              child: const Text('Select Log File'),
-            ),
-            Expanded(child: Text(logFileName)),
-          ],
-        ),
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: runIsActive ? () => runBatch(ref) : null,
-              child: const Text('Run'),
-            ),
-            Expanded(child: Container()),
-          ],
-        ),
-        const Expanded(child: StateWidget()),
+        const Expanded(
+            child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: StateWidget(),
+        )),
       ],
     );
   }
@@ -120,160 +68,146 @@ class StateWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var messages = ref.watch(messageProvider);
-    return ListView.builder(
+    return ScrollablePositionedList.builder(
       itemCount: messages.length,
       itemBuilder: (context, index) {
         var message = messages[index];
         return Text(message);
       },
+      itemScrollController: itemScrollController,
+      itemPositionsListener: itemPositionsListener,
     );
   }
 }
 
-Future<void> batchFilePick(WidgetRef ref) async {
-  List<FileSystemFileHandle> handles;
-  try {
-    handles = await window.showOpenFilePicker(
-      multiple: false,
-      // excludeAcceptAllOption: true,
-      types: const [
-        FilePickerAcceptType(description: "CSV", accept: {
-          "text/csv": [".csv"]
-        })
-      ],
-      // startIn: WellKnownDirectory.pictures),
-    );
-  } catch (e) {
-    return;
+Future<void> printMessage(WidgetRef ref, String message,
+    {bool log = false}) async {
+  var m = List.of(ref.read(messageProvider));
+  m.add(message);
+  ref.read(messageProvider.notifier).state = m;
+  await itemScrollController.scrollTo(
+      index: m.length - 1, duration: const Duration(milliseconds: 100));
+  if (log && logStream != null) {
+    await logStream!.writeAsText(message);
   }
-  FileSystemFileHandle? handle;
-  if (handles.isEmpty) {
-    return;
-  }
-  handle = handles[0];
-  ref.read(batchFileHandleProvider.notifier).state = handle;
-  var file = await handle.getFile();
-  var fr = FileReader()..readAsText(file);
-  fr.onLoadEnd.listen((event) {
-    var result = fr.result as String;
-    ref.read(batchFileProvider.notifier).state = result;
-  });
 }
 
-Future<void> whiteFilePick(WidgetRef ref) async {
-  List<FileSystemFileHandle> handles;
-  try {
-    handles = await window.showOpenFilePicker(
-      multiple: false,
-      excludeAcceptAllOption: true,
-      types: const [
-        FilePickerAcceptType(description: "CSV", accept: {
-          "text/csv": [".csv"]
-        })
-      ],
-    );
-  } catch (e) {
-    return;
-  }
-  FileSystemFileHandle? handle;
-  if (handles.isEmpty) {
-    return;
-  }
-  handle = handles[0];
-  ref.read(whiteFileHandleProvider.notifier).state = handle;
-  var file = await handle.getFile();
-  var fr = FileReader()..readAsText(file);
-  fr.onLoadEnd.listen((event) {
-    var result = fr.result as String;
-    ref.read(whiteFileProvider.notifier).state = result;
-  });
-}
-
-Future<void> resultFilePick(WidgetRef ref) async {
-  List<FileSystemFileHandle> handles;
-  try {
-    handles = await window.showOpenFilePicker(
-      multiple: false,
-      excludeAcceptAllOption: true,
-      types: const [
-        FilePickerAcceptType(description: "CSV", accept: {
-          "text/csv": [".csv"]
-        })
-      ],
-    );
-  } catch (e) {
-    return;
-  }
-  FileSystemFileHandle? handle;
-  if (handles.isEmpty) {
-    return;
-  }
-  handle = handles[0];
-  ref.read(resultFileHandleProvider.notifier).state = handle;
-}
-
-Future<void> logFilePick(WidgetRef ref) async {
-  List<FileSystemFileHandle> handles;
-  try {
-    handles = await window.showOpenFilePicker(
-      multiple: false,
-      // excludeAcceptAllOption: true,
-      types: const [
-        FilePickerAcceptType(description: "TXT", accept: {
-          "text/plain": [".txt"]
-        })
-      ],
-    );
-  } catch (e) {
-    return;
-  }
-  FileSystemFileHandle? handle;
-  if (handles.isEmpty) {
-    return;
-  }
-  handle = handles[0];
-  ref.read(logFileHandleProvider.notifier).state = handle;
-}
-
-Future<void> runBatch(WidgetRef ref) async {
-  var batchFile = ref.watch(batchFileProvider);
-  if (batchFile == null) {
-    return;
-  }
-  var batchStrings = readCsvLines(batchFile);
-
-  var whiteFile = ref.watch(whiteFileProvider);
-  if (whiteFile != null) {
-    var whiteStrings = readCsvLines(whiteFile);
-    // TODO
-  }
-
-  var resultHandle = ref.watch(resultFileHandleProvider);
-  if (resultHandle == null) {
-    return;
-  }
-  var resultStream = await resultHandle.createWritable();
-
-  var logHandle = ref.watch(logFileHandleProvider);
-  if (logHandle == null) {
-    return;
-  }
-  var logStream = await logHandle.createWritable();
-
+Future<void> batchDirPick(WidgetRef ref) async {
+  ref.read(messageProvider.notifier).state = [''];
   ref.read(isRunningProvider.notifier).state = true;
-  
+
+  FileSystemDirectoryHandle dirHandle;
+  try {
+    dirHandle =
+        await window.showDirectoryPicker(mode: PermissionMode.readwrite);
+    ref.read(batchDirNameProvider.notifier).state = dirHandle.name;
+
+    try {
+      await dirHandle.getFileHandle('lockfile');
+      await printMessage(ref,
+          'Directory is Locked. If there is no batch running, remove "lockfile".');
+      ref.read(isRunningProvider.notifier).state = false;
+      return;
+    } catch (e) {
+      // OK
+    }
+    await dirHandle.getFileHandle('lockfile', create: true);
+  } catch (e) {
+    ref.read(isRunningProvider.notifier).state = false;
+    return;
+  }
+
+  List<List<String?>> names;
+  try {
+    var namesHandle = (await dirHandle.getFileHandle('names.csv'))!;
+    var namesReader = FileReader()..readAsText(await namesHandle.getFile());
+    await namesReader.onLoadEnd.first;
+    names = parseCsvLines(namesReader.result as String);
+  } catch (e) {
+    await printMessage(ref, "\"names.csv\" can't be read.");
+    await dirHandle.removeEntry('lockfile');
+    ref.read(isRunningProvider.notifier).state = false;
+    return;
+  }
+
+  Map<WhiteResultKey, WhiteResultValue> whiteResults;
+  try {
+    var whiteHandle = (await dirHandle.getFileHandle('white_results.csv'))!;
+    var whiteReader = FileReader()..readAsText(await whiteHandle.getFile());
+    await whiteReader.onLoadEnd.first;
+    var csv = parseCsvLines(whiteReader.result as String);
+    whiteResults = buildWhiteResult(csv);
+  } catch (e) {
+    whiteResults = {};
+  }
+
+  FileSystemWritableFileStream resultStream;
+  try {
+    var resultHandle =
+        (await dirHandle.getFileHandle('results.csv', create: true))!;
+    resultStream = await resultHandle.createWritable();
+  } catch (e) {
+    await printMessage(ref, "\"result.csv\" can't be opened.");
+    await dirHandle.removeEntry('lockfile');
+    ref.read(isRunningProvider.notifier).state = false;
+    return;
+  }
+
+  try {
+    var logHandle = (await dirHandle.getFileHandle('log.txt', create: true))!;
+    logStream = await logHandle.createWritable();
+  } catch (e) {
+    await printMessage(ref, "\"log.txt\" can't be opened.");
+    await resultStream.close();
+    await dirHandle.removeEntry('lockfile');
+    ref.read(isRunningProvider.notifier).state = false;
+    return;
+  }
+
+  await runBatch(ref, names, whiteResults, resultStream);
+  await dumpUnrefferredWhiteResults(whiteResults, resultStream);
+
+  await resultStream.close();
+  await logStream!.close();
+  await dirHandle.removeEntry('lockfile');
+  ref.read(isRunningProvider.notifier).state = false;
+  await printMessage(ref, 'Batch completed.');
+}
+
+Future<void> runBatch(
+  WidgetRef ref,
+  List<List<String?>> names,
+  Map<WhiteResultKey, WhiteResultValue> whiteResults,
+  FileSystemWritableFileStream resultStream,
+) async {
+  await printMessage(
+      ref, "!!! Do not go away from \"Batch Screening\" tab !!!");
   startTime = DateTime.now();
   lastLap = startTime;
   currentLap = lastLap;
-  lc = 0;
 
-  for (var idx = 0; idx < batchStrings.length; idx += bulkSize) {
-    var sublist =
-        batchStrings.sublist(idx, min(idx + bulkSize, batchStrings.length));
-    var bulk = jsonEncode(sublist
-        .where((e) => e.isNotEmpty && e[1] != null)
-        .map(((e) => e[0]))
-        .toList());
+  for (var idx = 0; idx < names.length; idx += bulkSize) {
+    var sublist = names.sublist(idx, min(idx + bulkSize, names.length));
+    var nameBulk = <String>[];
+    var txidBulk = <String>[];
+    for (var i = 0; i < sublist.length; i++) {
+      var row = sublist[i];
+      String name;
+      if (row.isNotEmpty && row[0] != null) {
+        name = row[0]!;
+      } else {
+        name = '';
+      }
+      nameBulk.add(name);
+      String txid;
+      if (row.length > 1 && row[1] != null) {
+        txid = row[1]!;
+      } else {
+        txid = '';
+      }
+      txidBulk.add(txid);
+    }
+    var bulk = jsonEncode(nameBulk);
 
     var uri = Uri(
         scheme: 'http',
@@ -287,9 +221,7 @@ Future<void> runBatch(WidgetRef ref) async {
           headers: {'content-type': 'application/json; charset=utf-8'},
           body: bulk);
     } catch (e) {
-      var m = ref.read(messageProvider);
-      m.add('Server not responding.');
-      ref.read(messageProvider.notifier).state = m;
+      await printMessage(ref, 'Server not responding.');
       return;
     }
     var jsonString = response.body;
@@ -298,51 +230,73 @@ Future<void> runBatch(WidgetRef ref) async {
         .map<ScreeningResult>(
             (dynamic e) => ScreeningResult.fromJson(e as Map<String, dynamic>))
         .toList();
-    addResults(ref, resultStream, logStream, results);
+    outputResults(ref, resultStream, idx, txidBulk, results, whiteResults);
   }
-  resultStream.close();
-  logStream.close();
-  ref.read(isRunningProvider.notifier).state = false;
 }
 
-void addResults(WidgetRef ref, FileSystemWritableFileStream resultStream,
-    FileSystemWritableFileStream logStream, List<ScreeningResult> results) {
-  for (var result in results) {
-    ++lc;
+void outputResults(
+  WidgetRef ref,
+  FileSystemWritableFileStream resultStream,
+  int idx,
+  List<String> txids,
+  List<ScreeningResult> results,
+  Map<WhiteResultKey, WhiteResultValue> whiteResults,
+) {
+  for (var i = 0; i < results.length; i++) {
+    var result = results[i];
     if (result.queryStatus.terms.isEmpty) {
-      logStream.writeAsText(result.queryStatus.message);
-      var m = ref.read(messageProvider);
-      m.add(result.queryStatus.message);
-      ref.read(messageProvider.notifier).state = m;
+      printMessage(ref, '${idx + i}: ${result.queryStatus.message}', log: true);
       continue;
     }
     if (result.queryStatus.message != '') {
       cacheHits++;
       cacheHits2++;
     }
-    resultStream.writeAsText(formatOutput(lc, result));
-    if ((lc % bulkSize) == 0) {
+    resultStream
+        .writeAsText(formatOutput(idx + i, txids[i], result, whiteResults));
+    if (i == results.length - 1) {
       currentLap = DateTime.now();
-      var m = ref.read(messageProvider);
-      m.add('$lc\t${currentLap.difference(startTime).inMilliseconds}'
-          '\t${currentLap.difference(lastLap).inMilliseconds}'
-          '\t\t$cacheHits2\t$cacheHits');
-      ref.read(messageProvider.notifier).state = m;
+      printMessage(
+          ref,
+          '${idx + i + 1} ${currentLap.difference(startTime).inMilliseconds}'
+          ' ${currentLap.difference(lastLap).inMilliseconds}'
+          '  $cacheHits2 $cacheHits');
       cacheHits2 = 0;
       lastLap = currentLap;
     }
   }
 }
 
-String formatOutput(int ix, ScreeningResult result) {
+String formatOutput(
+  int ix,
+  String txid,
+  ScreeningResult result,
+  Map<WhiteResultKey, WhiteResultValue> whiteResults,
+) {
   var csvLine = StringBuffer();
   for (var e in result.detectedItems) {
-    csvLine.write(ix);
+    var detectedDateTime = result.queryStatus.start.toUtc().toIso8601String();
+    var firstDetectedDateTime = detectedDateTime;
+
+    var key = WhiteResultKey(txid, result.queryStatus.rawQuery, e.listCode,
+        e.matchedNames[0].entry.string);
+    var value = whiteResults[key];
+    var checked = false;
+    if (value != null) {
+      firstDetectedDateTime = value.detectedDateTime;
+      if (value.count > 0) {
+        value.count--;
+        checked = true;
+      }
+    }
+    csvLine.write(ix + 1);
     csvLine.write(r',');
-    csvLine.write('false'); //checked
+    csvLine.write(txid);
+    csvLine.write(r',');
+    csvLine.write(quoteCsvCell(result.queryStatus.rawQuery));
     csvLine.write(r',');
     if (result.queryStatus.queryScore == 0) {
-      csvLine.write('0.00');
+      csvLine.write('0');
     } else {
       csvLine.write(
           (e.matchedNames[0].score / result.queryStatus.queryScore * 100)
@@ -350,22 +304,106 @@ String formatOutput(int ix, ScreeningResult result) {
               .toString());
     }
     csvLine.write(r',');
-    csvLine.write('tx000'); // txid
-    csvLine.write(r',');
     csvLine.write(quoteCsvCell(e.listCode));
     csvLine.write(r',');
     csvLine.write(quoteCsvCell(e.matchedNames[0].entry.string));
     csvLine.write(r',');
-    csvLine.write(quoteCsvCell(result.queryStatus.rawQuery));
+    csvLine.write(checked ? 'true' : 'false');
     csvLine.write(r',');
-    csvLine.write(
-        quoteCsvCell(result.queryStatus.start.toUtc().toIso8601String()));
+    csvLine.write(quoteCsvCell(detectedDateTime));
+    csvLine.write(r',');
     csvLine.write(quoteCsvCell(result.queryStatus.databaseVersion));
     csvLine.write(r',');
-    csvLine.write(quoteCsvCell(
-        result.queryStatus.start.toUtc().toIso8601String())); // last detect
+    csvLine.write(quoteCsvCell(firstDetectedDateTime));
     csvLine.write('\r\n');
   }
   return csvLine.toString();
 }
-*/
+
+class WhiteResultKey {
+  WhiteResultKey(this.txid, this.name, this.code, this.matchedName)
+      : hashCode = Object.hashAll([txid, name, code, matchedName]);
+  final String txid;
+  final String name;
+  final String code;
+  final String matchedName;
+  @override
+  final int hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      other is WhiteResultKey &&
+      txid == other.txid &&
+      name == other.name &&
+      code == other.code &&
+      matchedName == other.matchedName;
+}
+
+class WhiteResultValue {
+  WhiteResultValue(this.count, this.detectedDateTime);
+  int count;
+  String detectedDateTime;
+}
+
+Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
+  List<List<String?>> csv,
+) {
+  var ret = <WhiteResultKey, WhiteResultValue>{};
+  for (var row in csv) {
+    if (row.length < 10) {
+      continue;
+    }
+    if (row[6] != 'true') {
+      continue;
+    }
+    var txid = row[1] ?? '';
+    var name = row[2] ?? '';
+    var code = row[4] ?? '';
+    var matchedName = row[5] ?? '';
+    var key = WhiteResultKey(txid, name, code, matchedName);
+    var value = ret[key];
+    var detectedDateTime = row[9] ?? '';
+    if (value == null) {
+      ret[key] = WhiteResultValue(1, detectedDateTime);
+    } else {
+      value.count++;
+      value.detectedDateTime =
+          detectedDateTime.compareTo(value.detectedDateTime) < 0
+              ? detectedDateTime
+              : value.detectedDateTime;
+    }
+  }
+  return ret;
+}
+
+Future<void> dumpUnrefferredWhiteResults(
+  Map<WhiteResultKey, WhiteResultValue> whiteResults,
+  FileSystemWritableFileStream resultStream,
+) async {
+  for (var e in whiteResults.entries) {
+    for (var i = 0; i < e.value.count; i++) {
+      var csvLine = StringBuffer();
+      csvLine.write(0);
+      csvLine.write(r',');
+      csvLine.write(e.key.txid);
+      csvLine.write(r',');
+      csvLine.write(quoteCsvCell(e.key.name));
+      csvLine.write(r',');
+      csvLine.write('0');
+      csvLine.write(r',');
+      csvLine.write(quoteCsvCell(e.key.code));
+      csvLine.write(r',');
+      csvLine.write(quoteCsvCell(e.key.matchedName));
+      csvLine.write(r',');
+      csvLine.write('true');
+      csvLine.write(r',');
+      csvLine.write(quoteCsvCell(e.value.detectedDateTime));
+      csvLine.write(r',');
+      csvLine.write(quoteCsvCell('1970-01-01T00:00:00.000Z'));
+      csvLine.write(r',');
+      csvLine.write(quoteCsvCell(e.value.detectedDateTime));
+      csvLine.write('\r\n');
+      await resultStream.writeAsText(csvLine.toString());
+    }
+  }
+}

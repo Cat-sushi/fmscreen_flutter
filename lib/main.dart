@@ -5,7 +5,7 @@ import 'single.dart';
 import 'batch.dart';
 
 void main() {
-  runApp(const ProviderScope(child:MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
