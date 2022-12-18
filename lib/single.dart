@@ -66,7 +66,7 @@ class QueryInputWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return InputHistoryTextField(
       historyKey: 'inputstring',
-      limit: 20,
+      limit: 5,
       autofocus: true,
       maxLines: 1,
       decoration: const InputDecoration(
@@ -315,7 +315,7 @@ class QueryStartTimeWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var start = result.queryStatus.start.toIso8601String();
-    var startShort = '${start.substring(0,19)}Z';
+    var startShort = '${start.substring(0, 19)}Z';
     return Row(
       children: [
         const Text('Start: '),
@@ -370,7 +370,7 @@ class DbVersionWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var a = result.queryStatus.databaseVersion;
-    var dbver ='${a.substring(0,19)}Z';
+    var dbver = '${a.substring(0, 19)}Z';
     return Row(
       children: [
         const Text('DB Ver.: '),
