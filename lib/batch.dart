@@ -15,11 +15,50 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'src/util.dart';
 
 final batchDirNameProvider = StateProvider<String>((ref) => '');
-final messageProvider = StateProvider<List<String>>((ref) => []);
+
 final itemScrollController = ItemScrollController();
 final itemPositionsListener = ItemPositionsListener.create();
+
+class MessagesNotifier extends StateNotifier<List<String>> {
+  MessagesNotifier() : super([]);
+
+  Future<void> print(String message) async {
+    var idx = state.length;
+    state = [...state, message];
+    if (idx > 0 && itemScrollController.isAttached) {
+      await itemScrollController.scrollTo(
+          index: idx, duration: const Duration(milliseconds: 100));
+    }
+  }
+
+  void clear() {
+    state = [];
+  }
+}
+
+final messagesNotifier = MessagesNotifier();
+final messagesNotifierProveder =
+    StateNotifierProvider<MessagesNotifier, List<String>>(
+        (ref) => messagesNotifier);
+Future<void> printMessage(String message, {bool log = false}) async {
+  await messagesNotifier.print(message);
+
+  if (log && logStream != null) {
+    await logStream!.writeAsText('$message\r');
+  }
+}
+
+class IsRunningNotifier extends StateNotifier<bool> {
+  IsRunningNotifier() : super(false);
+  void run() => state = true;
+  void end() => state = false;
+}
+
+final isRunningNotifier = IsRunningNotifier();
+final isRunningProvider =
+    StateNotifierProvider<IsRunningNotifier, bool>((ref) => isRunningNotifier);
+
 FileSystemWritableFileStream? logStream;
-final isRunningProvider = StateProvider<bool>((ref) => false);
 
 late DateTime startTime;
 late DateTime currentLap;
@@ -67,7 +106,7 @@ class StateWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    var messages = ref.watch(messageProvider);
+    var messages = ref.watch(messagesNotifierProveder);
     return ScrollablePositionedList.builder(
       itemCount: messages.length,
       itemBuilder: (context, index) {
@@ -80,21 +119,9 @@ class StateWidget extends ConsumerWidget {
   }
 }
 
-Future<void> printMessage(WidgetRef ref, String message,
-    {bool log = false}) async {
-  var m = List.of(ref.read(messageProvider));
-  m.add(message);
-  ref.read(messageProvider.notifier).state = m;
-  await itemScrollController.scrollTo(
-      index: m.length - 1, duration: const Duration(milliseconds: 100));
-  if (log && logStream != null) {
-    await logStream!.writeAsText(message);
-  }
-}
-
 Future<void> batchDirPick(WidgetRef ref) async {
-  ref.read(messageProvider.notifier).state = [''];
-  ref.read(isRunningProvider.notifier).state = true;
+  messagesNotifier.clear();
+  isRunningNotifier.run();
 
   FileSystemDirectoryHandle dirHandle;
   try {
@@ -104,16 +131,16 @@ Future<void> batchDirPick(WidgetRef ref) async {
 
     try {
       await dirHandle.getFileHandle('lockfile');
-      await printMessage(ref,
+      await printMessage(
           'Directory is Locked. If there is no batch running, remove "lockfile".');
-      ref.read(isRunningProvider.notifier).state = false;
+      isRunningNotifier.end();
       return;
     } catch (e) {
       // OK
     }
     await dirHandle.getFileHandle('lockfile', create: true);
   } catch (e) {
-    ref.read(isRunningProvider.notifier).state = false;
+    isRunningNotifier.end();
     return;
   }
 
@@ -124,9 +151,9 @@ Future<void> batchDirPick(WidgetRef ref) async {
     await namesReader.onLoadEnd.first;
     names = parseCsvLines(namesReader.result as String);
   } catch (e) {
-    await printMessage(ref, "\"names.csv\" can't be read.");
+    await printMessage("\"names.csv\" can't be read.");
     await dirHandle.removeEntry('lockfile');
-    ref.read(isRunningProvider.notifier).state = false;
+    isRunningNotifier.end();
     return;
   }
 
@@ -147,9 +174,9 @@ Future<void> batchDirPick(WidgetRef ref) async {
         (await dirHandle.getFileHandle('results.csv', create: true))!;
     resultStream = await resultHandle.createWritable();
   } catch (e) {
-    await printMessage(ref, "\"result.csv\" can't be opened.");
+    await printMessage("\"result.csv\" can't be opened.");
     await dirHandle.removeEntry('lockfile');
-    ref.read(isRunningProvider.notifier).state = false;
+      isRunningNotifier.end();
     return;
   }
 
@@ -157,10 +184,10 @@ Future<void> batchDirPick(WidgetRef ref) async {
     var logHandle = (await dirHandle.getFileHandle('log.txt', create: true))!;
     logStream = await logHandle.createWritable();
   } catch (e) {
-    await printMessage(ref, "\"log.txt\" can't be opened.");
+    await printMessage("\"log.txt\" can't be opened.");
     await resultStream.close();
     await dirHandle.removeEntry('lockfile');
-    ref.read(isRunningProvider.notifier).state = false;
+      isRunningNotifier.end();
     return;
   }
 
@@ -170,8 +197,8 @@ Future<void> batchDirPick(WidgetRef ref) async {
   await resultStream.close();
   await logStream!.close();
   await dirHandle.removeEntry('lockfile');
-  ref.read(isRunningProvider.notifier).state = false;
-  await printMessage(ref, 'Batch completed.');
+      isRunningNotifier.end();
+  await printMessage('Batch completed.');
 }
 
 Future<void> runBatch(
@@ -180,11 +207,11 @@ Future<void> runBatch(
   Map<WhiteResultKey, WhiteResultValue> whiteResults,
   FileSystemWritableFileStream resultStream,
 ) async {
-  await printMessage(
-      ref, "!!! Do not go away from \"Batch Screening\" tab !!!");
   startTime = DateTime.now();
   lastLap = startTime;
   currentLap = lastLap;
+  cacheHits = 0;
+  cacheHits2 = 0;
 
   for (var idx = 0; idx < names.length; idx += bulkSize) {
     var sublist = names.sublist(idx, min(idx + bulkSize, names.length));
@@ -221,7 +248,7 @@ Future<void> runBatch(
           headers: {'content-type': 'application/json; charset=utf-8'},
           body: bulk);
     } catch (e) {
-      await printMessage(ref, 'Server not responding.');
+      await printMessage('Server not responding.');
       return;
     }
     var jsonString = response.body;
@@ -230,34 +257,35 @@ Future<void> runBatch(
         .map<ScreeningResult>(
             (dynamic e) => ScreeningResult.fromJson(e as Map<String, dynamic>))
         .toList();
-    outputResults(ref, resultStream, idx, txidBulk, results, whiteResults);
+    await outputResults(
+        ref, resultStream, idx, txidBulk, results, whiteResults);
   }
 }
 
-void outputResults(
+Future<void> outputResults(
   WidgetRef ref,
   FileSystemWritableFileStream resultStream,
   int idx,
   List<String> txids,
   List<ScreeningResult> results,
   Map<WhiteResultKey, WhiteResultValue> whiteResults,
-) {
+) async {
   for (var i = 0; i < results.length; i++) {
     var result = results[i];
     if (result.queryStatus.terms.isEmpty) {
-      printMessage(ref, '${idx + i}: ${result.queryStatus.message}', log: true);
+      await printMessage('${idx + i}: ${result.queryStatus.message}',
+          log: true);
       continue;
     }
     if (result.queryStatus.message != '') {
       cacheHits++;
       cacheHits2++;
     }
-    resultStream
+    await resultStream
         .writeAsText(formatOutput(idx + i, txids[i], result, whiteResults));
     if (i == results.length - 1) {
       currentLap = DateTime.now();
-      printMessage(
-          ref,
+      await printMessage(
           '${idx + i + 1} ${currentLap.difference(startTime).inMilliseconds}'
           ' ${currentLap.difference(lastLap).inMilliseconds}'
           '  $cacheHits2 $cacheHits');
@@ -291,7 +319,7 @@ String formatOutput(
     }
     csvLine.write(ix + 1);
     csvLine.write(r',');
-    csvLine.write(txid);
+    csvLine.write(quoteCsvCell(txid));
     csvLine.write(r',');
     csvLine.write(quoteCsvCell(result.queryStatus.rawQuery));
     csvLine.write(r',');
@@ -385,7 +413,7 @@ Future<void> dumpUnrefferredWhiteResults(
       var csvLine = StringBuffer();
       csvLine.write(0);
       csvLine.write(r',');
-      csvLine.write(e.key.txid);
+      csvLine.write(quoteCsvCell(e.key.txid));
       csvLine.write(r',');
       csvLine.write(quoteCsvCell(e.key.name));
       csvLine.write(r',');
