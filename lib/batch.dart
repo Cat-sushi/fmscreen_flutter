@@ -176,7 +176,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
   } catch (e) {
     await printMessage("\"result.csv\" can't be opened.");
     await dirHandle.removeEntry('lockfile');
-      isRunningNotifier.end();
+    isRunningNotifier.end();
     return;
   }
 
@@ -187,18 +187,20 @@ Future<void> batchDirPick(WidgetRef ref) async {
     await printMessage("\"log.txt\" can't be opened.");
     await resultStream.close();
     await dirHandle.removeEntry('lockfile');
-      isRunningNotifier.end();
+    isRunningNotifier.end();
     return;
   }
 
-  await runBatch(ref, names, whiteResults, resultStream);
-  await dumpUnrefferredWhiteResults(whiteResults, resultStream);
-
-  await resultStream.close();
-  await logStream!.close();
-  await dirHandle.removeEntry('lockfile');
-      isRunningNotifier.end();
-  await printMessage('Batch completed.');
+  try {
+    await runBatch(ref, names, whiteResults, resultStream);
+    await dumpUnrefferredWhiteResults(whiteResults, resultStream);
+  } finally {
+    await resultStream.close();
+    await logStream!.close();
+    await dirHandle.removeEntry('lockfile');
+    isRunningNotifier.end();
+    await printMessage('Batch completed.');
+  }
 }
 
 Future<void> runBatch(
@@ -235,7 +237,6 @@ Future<void> runBatch(
       txidBulk.add(txid);
     }
     var bulk = jsonEncode(nameBulk);
-
     var uri = Uri(
         scheme: 'http',
         host: 'localhost',
