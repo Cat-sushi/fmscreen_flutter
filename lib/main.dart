@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FMScreen ― Denial List Screener with Fuzzy Muching ―',
+      title: 'FMScreen',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
