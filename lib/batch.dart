@@ -44,7 +44,7 @@ Future<void> printMessage(String message, {bool log = false}) async {
   await messagesNotifier.print(message);
 
   if (log && logStream != null) {
-    await logStream!.writeAsText('$message\r');
+    await logStream!.writeAsText('$message\n');
   }
 }
 
