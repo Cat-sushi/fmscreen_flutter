@@ -146,7 +146,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
 
   List<List<String?>> names;
   try {
-    var namesHandle = (await dirHandle.getFileHandle('names.csv'))!;
+    var namesHandle = (await dirHandle.getFileHandle('names.csv'));
     var namesReader = FileReader()..readAsText(await namesHandle.getFile());
     await namesReader.onLoadEnd.first;
     names = parseCsvLines(namesReader.result as String);
@@ -159,7 +159,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
 
   Map<WhiteResultKey, WhiteResultValue> whiteResults;
   try {
-    var whiteHandle = (await dirHandle.getFileHandle('white_results.csv'))!;
+    var whiteHandle = (await dirHandle.getFileHandle('white_results.csv'));
     var whiteReader = FileReader()..readAsText(await whiteHandle.getFile());
     await whiteReader.onLoadEnd.first;
     var csv = parseCsvLines(whiteReader.result as String);
@@ -171,7 +171,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
   FileSystemWritableFileStream resultStream;
   try {
     var resultHandle =
-        (await dirHandle.getFileHandle('results.csv', create: true))!;
+        (await dirHandle.getFileHandle('results.csv', create: true));
     resultStream = await resultHandle.createWritable();
   } catch (e) {
     await printMessage("\"result.csv\" can't be opened.");
@@ -181,7 +181,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
   }
 
   try {
-    var logHandle = (await dirHandle.getFileHandle('log.txt', create: true))!;
+    var logHandle = (await dirHandle.getFileHandle('log.txt', create: true));
     logStream = await logHandle.createWritable();
   } catch (e) {
     await printMessage("\"log.txt\" can't be opened.");
