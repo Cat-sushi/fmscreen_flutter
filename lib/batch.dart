@@ -27,7 +27,7 @@ class MessagesNotifier extends StateNotifier<List<String>> {
     state = [...state, message];
     if (idx > 0 && itemScrollController.isAttached) {
       await itemScrollController.scrollTo(
-          index: idx, duration: const Duration(milliseconds: 100));
+          index: idx, duration: const Duration(microseconds: 1));
     }
   }
 
@@ -73,6 +73,16 @@ class BatchScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    WidgetsBinding.instance.addPostFrameCallback((duration) async {
+      if (itemScrollController.isAttached) {
+        var idx = ref.read(messagesNotifierProveder).length - 1;
+        if (idx >= 0) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          unawaited(itemScrollController.scrollTo(
+              index: idx, duration: const Duration(microseconds: 1)));
+        }
+      }
+    });
     var isRunning = ref.watch(isRunningProvider);
     var batchDirName = ref.watch(batchDirNameProvider);
     return Column(

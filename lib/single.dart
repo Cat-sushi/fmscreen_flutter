@@ -13,8 +13,10 @@ import 'package:url_launcher/url_launcher.dart';
 final resultProvider = StateProvider<ScreeningResult?>((ref) => null);
 final selectedIndexProvider = StateProvider<int?>((ref) => null);
 
-final itemScrollController = ItemScrollController();
-final itemPositionsListener = ItemPositionsListener.create();
+final itemScrollController1 = ItemScrollController();
+final itemPositionsListener1 = ItemPositionsListener.create();
+final itemScrollController2 = ItemScrollController();
+final itemPositionsListener2 = ItemPositionsListener.create();
 
 Future<void> screen(String input, WidgetRef ref) async {
   var uri = Uri(
@@ -67,7 +69,7 @@ class QueryInputWidget extends ConsumerWidget {
     return InputHistoryTextField(
       historyKey: 'inputstring',
       limit: 5,
-      autofocus: true,
+      autofocus: false,
       maxLines: 1,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
@@ -93,6 +95,20 @@ class ScreeningResultWidget extends ConsumerWidget {
     if (result == null) {
       return Container();
     }
+    var index = ref.read(selectedIndexProvider);
+    WidgetsBinding.instance.addPostFrameCallback((duration) async {
+      if (index != null) {
+        await Future.delayed(const Duration(milliseconds: 200));
+        unawaited(itemScrollController1.scrollTo(
+            index: index + 1,
+            duration: const Duration(microseconds: 1),
+            curve: Curves.easeInOutCubic));
+        unawaited(itemScrollController2.scrollTo(
+            index: index,
+            duration: const Duration(microseconds: 1),
+            curve: Curves.easeInOutCubic));
+      }
+    });
     return Column(children: [
       QueryStatusWidget(result),
       const SizedBox(height: 8.0),
@@ -526,11 +542,12 @@ class DetctedItemsWidget extends ConsumerWidget {
           ),
           Expanded(
             child: SelectionArea(
-              child: ListView.builder(
+              child: ScrollablePositionedList.builder(
                 itemCount: itemCount + 1,
-                itemBuilder: ((context, index) {
-                  return DetectedItemWidget(result, index);
-                }),
+                itemBuilder: (context, index) =>
+                    DetectedItemWidget(result, index),
+                itemScrollController: itemScrollController1,
+                itemPositionsListener: itemPositionsListener1,
               ),
             ),
           ),
@@ -612,12 +629,15 @@ class DetectedItemWidget extends ConsumerWidget {
             fit: FlexFit.tight,
             child: GestureDetector(
               onTap: () {
-                ref.read(selectedIndexProvider.notifier).state =
+                var index =
                     ref.read(selectedIndexProvider) == _index ? null : _index;
-                itemScrollController.scrollTo(
-                    index: _index,
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeInOutCubic);
+                ref.read(selectedIndexProvider.notifier).state = index;
+                if (index != null) {
+                  itemScrollController2.scrollTo(
+                      index: _index,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOutCubic);
+                }
               },
               child: Container(
                   alignment: Alignment.topLeft,
@@ -654,8 +674,8 @@ class DetectedItemsDetailWidget extends ConsumerWidget {
             itemCount: items.length,
             itemBuilder: (context, index) =>
                 DetectedItemDetailWidget(result, index),
-            itemScrollController: itemScrollController,
-            itemPositionsListener: itemPositionsListener,
+            itemScrollController: itemScrollController2,
+            itemPositionsListener: itemPositionsListener2,
           )),
         ],
       ),
@@ -666,12 +686,12 @@ class DetectedItemsDetailWidget extends ConsumerWidget {
 class DetectedItemDetailWidget extends ConsumerWidget {
   const DetectedItemDetailWidget(
     this.result,
-    this.index, {
+    this._index, {
     Key? key,
   }) : super(key: key);
 
   final ScreeningResult result;
-  final int index;
+  final int _index;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -681,13 +701,20 @@ class DetectedItemDetailWidget extends ConsumerWidget {
       child: SelectionArea(
         child: GestureDetector(
           onTap: () {
-            ref.read(selectedIndexProvider.notifier).state =
-                ref.read(selectedIndexProvider) == index ? null : index;
+            var index =
+                ref.read(selectedIndexProvider) == _index ? null : _index;
+            ref.read(selectedIndexProvider.notifier).state = index;
+            if (index != null) {
+              itemScrollController1.scrollTo(
+                  index: _index + 1,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOutCubic);
+            }
           },
           child: Container(
               decoration: BoxDecoration(
                 border: Border.all(),
-                color: index == selected
+                color: _index == selected
                     ? const Color.fromRGBO(237, 223, 207, 1.0)
                     : const Color.fromRGBO(229, 237, 237, 1.0),
               ),
@@ -697,7 +724,7 @@ class DetectedItemDetailWidget extends ConsumerWidget {
                   Row(
                     children: [
                       const SizedBox(width: 8),
-                      Expanded(child: MatchedNamesWidget(result, index)),
+                      Expanded(child: MatchedNamesWidget(result, _index)),
                       const SizedBox(width: 8),
                     ],
                   ),
@@ -705,7 +732,7 @@ class DetectedItemDetailWidget extends ConsumerWidget {
                   Row(
                     children: [
                       const SizedBox(width: 8),
-                      Expanded(child: BodyWidget(result, index)),
+                      Expanded(child: BodyWidget(result, _index)),
                       const SizedBox(width: 8),
                     ],
                   ),
