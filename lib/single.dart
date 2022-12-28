@@ -10,6 +10,8 @@ import 'package:json2yaml/json2yaml.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'main.dart';
+
 final resultProvider = StateProvider<ScreeningResult?>((ref) => null);
 final selectedIndexProvider = StateProvider<int?>((ref) => null);
 
@@ -20,9 +22,9 @@ final itemPositionsListener2 = ItemPositionsListener.create();
 
 Future<void> screen(String input, WidgetRef ref) async {
   var uri = Uri(
-      scheme: 'http',
-      host: 'localhost',
-      port: 8080,
+      scheme: scheme,
+      host: host,
+      port: port,
       path: '/',
       queryParameters: {'c': '1', 'v': '1', 'q': input});
   http.Response response;
@@ -529,9 +531,9 @@ class DetctedItemsWidget extends ConsumerWidget {
                       var input =
                           ref.read(resultProvider)!.queryStatus.inputString;
                       var uri = Uri(
-                          scheme: 'http',
-                          host: 'localhost',
-                          port: 8080,
+                          scheme: scheme,
+                          host: host,
+                          port: port,
                           path: '/pdf',
                           queryParameters: {'c': '1', 'v': '1', 'q': input});
                       unawaited(launchUrl(uri));
@@ -541,14 +543,12 @@ class DetctedItemsWidget extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: SelectionArea(
-              child: ScrollablePositionedList.builder(
-                itemCount: itemCount + 1,
-                itemBuilder: (context, index) =>
-                    DetectedItemWidget(result, index),
-                itemScrollController: itemScrollController1,
-                itemPositionsListener: itemPositionsListener1,
-              ),
+            child: ScrollablePositionedList.builder(
+              itemCount: itemCount + 1,
+              itemBuilder: (context, index) =>
+                  DetectedItemWidget(result, index),
+              itemScrollController: itemScrollController1,
+              itemPositionsListener: itemPositionsListener1,
             ),
           ),
         ],
@@ -627,22 +627,24 @@ class DetectedItemWidget extends ConsumerWidget {
           const SizedBox(width: 8),
           Flexible(
             fit: FlexFit.tight,
-            child: GestureDetector(
-              onTap: () {
-                var index =
-                    ref.read(selectedIndexProvider) == _index ? null : _index;
-                ref.read(selectedIndexProvider.notifier).state = index;
-                if (index != null) {
-                  itemScrollController2.scrollTo(
-                      index: _index,
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeInOutCubic);
-                }
-              },
-              child: Container(
-                  alignment: Alignment.topLeft,
-                  padding: const EdgeInsets.all(2),
-                  child: Text(item.matchedNames[0].entry.string)),
+            child: SelectionArea(
+              child: GestureDetector(
+                onTap: () {
+                  var index =
+                      ref.read(selectedIndexProvider) == _index ? null : _index;
+                  ref.read(selectedIndexProvider.notifier).state = index;
+                  if (index != null) {
+                    itemScrollController2.scrollTo(
+                        index: _index,
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeInOutCubic);
+                  }
+                },
+                child: Container(
+                    alignment: Alignment.topLeft,
+                    padding: const EdgeInsets.all(2),
+                    child: Text(item.matchedNames[0].entry.string)),
+              ),
             ),
           ),
         ],

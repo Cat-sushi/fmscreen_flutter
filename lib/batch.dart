@@ -12,6 +12,7 @@ import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_system_access_api/file_system_access_api.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'main.dart';
 import 'src/util.dart';
 
 final batchDirNameProvider = StateProvider<String>((ref) => '');
@@ -225,8 +226,13 @@ Future<void> runBatch(
   cacheHits = 0;
   cacheHits2 = 0;
 
+  await printMessage('Server: $scheme://$host:$port/', log: true);
+  await printMessage('Start batch at: ${startTime.toUtc().toIso8601String()}');
+
+  int queryCount = 0;
   for (var idx = 0; idx < names.length; idx += bulkSize) {
     var sublist = names.sublist(idx, min(idx + bulkSize, names.length));
+    queryCount += sublist.length;
     var nameBulk = <String>[];
     var txidBulk = <String>[];
     for (var i = 0; i < sublist.length; i++) {
@@ -248,9 +254,9 @@ Future<void> runBatch(
     }
     var bulk = jsonEncode(nameBulk);
     var uri = Uri(
-        scheme: 'http',
-        host: 'localhost',
-        port: 8080,
+        scheme: scheme,
+        host: host,
+        port: port,
         path: '/',
         queryParameters: {'c': '1', 'v': '0'});
     http.Response response;
@@ -271,6 +277,12 @@ Future<void> runBatch(
     await outputResults(
         ref, resultStream, idx, txidBulk, results, whiteResults);
   }
+
+  var endTime = DateTime.now();
+  await printMessage('Dulation: ${endTime.difference(startTime).inSeconds}',
+      log: true);
+  await printMessage('Number of queries: $queryCount', log: true);
+  await printMessage('Number of chache hits: $cacheHits', log: true);
 }
 
 Future<void> outputResults(
