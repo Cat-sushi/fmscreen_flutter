@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:window_location_href/window_location_href.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'single.dart';
 import 'batch.dart';
@@ -52,16 +53,22 @@ class MyAppHome extends StatelessWidget {
         initialIndex: 0,
         length: 2,
         child: Scaffold(
-          appBar: AppBar(
-            // primary: true,
-            toolbarHeight: 24,
-            title: const Text(
-                'FMScreen ― Name Screener against Denial Lists with Fuzzy Matcing ―'),
-            bottom: const TabBar(
-              tabs: <Widget>[
-                Tab(text: 'Interactictive Screening', height: 24),
-                Tab(text: 'Batch Screening', height: 24),
-              ],
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: SafeArea(
+              child: AppBar(
+                toolbarHeight: 32,
+                title: const Text(
+                    'FMScreen ― Name Screener against Denial Lists with Fuzzy Matcing ―'),
+                actionsIconTheme: const IconThemeData(color: Colors.white),
+                actions: const [MoreMenueWidiget()],
+                bottom: const TabBar(
+                  tabs: <Widget>[
+                    Tab(text: 'Interactictive Screening', height: 24),
+                    Tab(text: 'Batch Screening', height: 24),
+                  ],
+                ),
+              ),
             ),
           ),
           body: const TabBarView(children: [
@@ -71,3 +78,220 @@ class MyAppHome extends StatelessWidget {
         ));
   }
 }
+
+class MoreMenueWidiget extends StatelessWidget {
+  const MoreMenueWidiget({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton(
+      icon: const Icon(Icons.more_vert,size: 18),
+      itemBuilder: (context) {
+        return <PopupMenuEntry>[
+          const PopupMenuItem(value: 'description', child: Text('Description')),
+          const PopupMenuDivider(),
+          const PopupMenuItem(value: 'general', child: Text('Usage ― General ―')),
+          const PopupMenuItem(
+              value: 'intaractive', child: Text('Usage ― Interactive Screening ―')),
+          const PopupMenuItem(value: 'batch', child: Text('Usage ― Batch Screening ―')),
+          const PopupMenuDivider(),
+          const PopupMenuItem(value: 'lists', child: Text('Denial Lists')),
+          const PopupMenuDivider(),
+          const PopupMenuItem(value: 'license', child: Text('License')),
+        ];
+      },
+      onSelected: (value) => showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          scrollable: true,
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: MarkdownBody(data: helps[value]!),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+const helps = <String, String>{
+  'description': '''
+# Description
+
+This is a client for a system of name screening against denial lists such as US EAR Entity List.
+See "Denaial Lists".
+
+## Features
+- Term fuzzy matching using Levenshtein distance.
+- Divided query terms matching with single list term.
+- Pertial terms matching.
+- Disorder terms matching.
+- Score based filtering respecting term similarity, term order, and term importance of IDF.
+- Perfect matching mode disabling fuzzy matchings for reducing false positives in some cases.
+- Accepting Latin characters, Chinese characters, Katakana characters, and others.
+- Canonicalaization of traditioanal and simplified Chinese characters, and others.
+  This makes matching insensitive to character simplification.
+- Canonicalaization of spelling variants of legal entity types such as "Limitd" and "Ltd.".
+  This makes matching insensitive to spelling variants of legal entity types.
+- White queries for avoiding screening your company itself and consequent false positives.
+- Results cache for time performance.
+- Interactive Screening.
+- Batch Screening.
+- White Results for skiping cheks of false positive
+- And others.
+''',
+  'general': '''
+# Usage ― General ―
+
+## Recomended Input
+
+- Official full name is recommended.
+- Discriminating keyword is OK, but too short keyword might cause massive false positives.
+
+## Perfect Matching
+
+Embrace whole input string with double-quates.
+This disables,
+
+- Term fuzzy matching
+- Pertial terms matching
+- Disorder terms matching
+
+But, keeps enable,
+
+- Normaliztion
+  - Captalization
+  - White space normalization
+  - Unicode normalization
+- Canonicalization of traditional/ simplified Chinese characters
+- Canonicalization of variants of spelling of legal entity types
+''',
+  'intaractive': '''
+# Usage ― Intractive Screening ―
+
+- "Input String" is the string you inputted.
+- "Normalized" is normalized string of your input string.
+- "Preprocessed" is a set of extracted "words" from preprocess.
+  Preprocess includes canonicalization of traditional/ simplified Chinese characters,
+  canonicalization of variants of spelling of legal entyty types, and others.
+- "Query Score" means the discrimination of input strings. 
+  Input strings with low query score might cause massive false positives,
+  while high query score does not necessarily mean a good input string.
+- "Start" means Date/Time of starting the screening.
+- "Duration" means the internal hold time in seconds in the server for screening.
+- "DB Ver.", database version, means the Date/Time when the database from Denial Lists is created.
+  The difference of database version donesn't necesarilly mean some of Denial Lists are modifined,
+  because the database is updated daily regardless of modification of Denial Lists.
+- "Server ID" is just for your information. This is the thread (Dart Isolate) ID in the server.
+- "Perfect" is checked when the input string is embraced with double-quates.
+- "Fallen Back" is cheked when some termes of preprocessed are removed for some peformance reasons,
+  in some very rare cases.
+- "Message" is the message from the server. It's just for your information.
+- The left pain contains the best matched name of each detected items of Denial Lists,
+  with matching score and the code of list.
+- The right pain contains the details of each detected items.
+- Click a detected item in the left pain to heading the detail of the item in the right pain,
+  and vice-versa.
+- Click [Get PDF] button to obtain detected items list in PDF format.
+  The PDF file doesn't contain the details of the items.
+''',
+  'batch': '''
+# Usage ― Batch Screening ―
+## UI
+
+- Make a name list for screening in CSV format with name of "names.csv".
+- Click [Select Batch Directory] button.
+- With opened file picker, select the directory containing the "names.csv".
+- "results.csv" and "log.txt" will be placed in the same directory.
+
+## Name List Format
+
+"names.csv" is in CSV  format.
+
+|Column|Description|
+|---|---|
+|1st|Every one line contains one name for screening.|
+|2nd|You can optionally specify a transaction ID for each line. See "White Results" section.|
+
+## Results Format
+
+"results.csv" is in CSV format.
+
+|Column|Description|
+|---|---|
+|1st|The number of the row in "names.csv"|
+|2nd|The transaction ID, See "White Results" section.|
+|3rd|The name for screening. Normalized.|
+|4th|The matching score.|
+|5th|The code of list|
+|6th|The best matched name of each detected item. Normalized.|
+|7th|The flag of checked. See "White Results" section.|
+|8th|The Date/Time of screening.|
+|9th|The version of the database made from the Denial Lists.|
+|10th|The Date/Time of first detect of item with same name for screening, same transaction ID, same name of detected item, and same code of list|
+
+## White Results
+
+White Results are useful to skip redundant checks for false positives.
+
+A file of results from previous batch screening can be used as White Reults with following steps,
+
+- Rename "results.csv" to "white_results.csv"
+- Turn the 7th (the flag of checked) column from "false" to "true"
+- Place the "white_results.csv" at same directory of "names.csv"
+- Kick the next batch screening.
+
+With White Results, each detected item from next batch screening with the same name for screening,
+the sme transaction ID, the same code of list and the same matched name of the item
+in White Results will be marked "true" in 7th column, and the 10th (the Date/Time of first detect)
+will be same as that of the item in the White Results.
+''',
+  'lists': '''
+# Contained Denial Lists
+
+|List Name|Code of Denial List|
+|---|---|
+|Capta List (CAP) - Treasury Department|CAP|
+|Denied Persons List (DPL) - Bureau of Industry and Security|DPL|
+|Entity List (EL) - Bureau of Industry and Security|EL|
+|Foreign Sanctions Evaders (FSE) - Treasury Department|FSE|
+|ITAR Debarred (DTC) - State Department|DTC|
+|Military End User (MEU) List - Bureau of Industry and Security|MEU|
+|Non-SDN Chinese Military-Industrial Complex Companies List (CMIC) - Treasury Department|CMIC|
+|Non-SDN Menu-Based Sanctions List (NS-MBS List) - Treasury Department|MBS|
+|Nonproliferation Sanctions (ISN) - State Department|ISN|
+|Sectoral Sanctions Identifications List (SSI) - Treasury Department|SSI|
+|Specially Designated Nationals (SDN) - Treasury Department|SDN|
+|Unverified List (UVL) - Bureau of Industry and Security|UVL|
+|Foreigh End User List (EUL) - Ministry of Economy, Trade and Industry, Japans|EUL|
+
+## Sources
+
+- [Consolidated Screening List](https://www.trade.gov/consolidated-screening-list "Consolidated Screening List")
+- [安全保障貿易管理**Export Control*関係法令：申請、相談に関する通達](https://www.meti.go.jp/policy/anpo/law05.html "安全保障貿易管理**Export Control*関係法令：申請、相談に関する通達")
+
+''',
+  'license': '''
+# License
+
+## This Client Software
+
+MITL
+
+## The Server
+
+AGPL3.0
+
+Contact me if you need another different License.
+
+## Dependences
+
+Libraries used by this system have their own OSS Licenses.
+
+## Denial Lists
+
+Public Domain
+''',
+};
