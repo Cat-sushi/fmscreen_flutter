@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FMScreen',
+      title: 'JunoScreen',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -59,7 +59,7 @@ class MyAppHome extends StatelessWidget {
               child: AppBar(
                 toolbarHeight: 32,
                 title: const Text(
-                    'FMScreen ― Name Screener against Denial Lists with Fuzzy Matcing ―'),
+                    'JunoScreen ― Name Screener against Denial Lists with Fuzzy Matcing ―'),
                 actionsIconTheme: const IconThemeData(color: Colors.white),
                 actions: const [MoreMenueWidiget()],
                 bottom: const TabBar(

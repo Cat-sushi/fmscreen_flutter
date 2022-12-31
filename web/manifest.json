@@ -1,6 +1,6 @@
 {
-    "name": "FMScreen",
-    "short_name": "FMScreen",
+    "name": "JunoScreen",
+    "short_name": "JunoScreen",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
