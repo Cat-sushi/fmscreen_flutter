@@ -1,16 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-// class BatchScreen extends ConsumerWidget {
-//   const BatchScreen({super.key});
-
 import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:html';
+import 'package:file_system_access_api/file_system_access_api.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
-import 'package:file_system_access_api/file_system_access_api.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'main.dart';
 import 'src/util.dart';
@@ -296,7 +292,7 @@ Future<void> outputResults(
   for (var i = 0; i < results.length; i++) {
     var result = results[i];
     if (result.queryStatus.terms.isEmpty) {
-      await printMessage('${idx + i}: ${result.queryStatus.message}',
+      await printMessage('${idx + i + 1}: ${result.queryStatus.message}',
           log: true);
       continue;
     }
