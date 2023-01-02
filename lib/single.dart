@@ -443,7 +443,7 @@ class PerfectMatchingWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     var pf = result.queryStatus.perfectMatching;
     return Chip(
-      label: Text('Perfect',
+      label: Text('Exact',
           style: TextStyle(
               color: pf ? null : const Color.fromRGBO(192, 192, 192, 1.0))),
       avatar: pf ? const Icon(Icons.check_circle) : null,

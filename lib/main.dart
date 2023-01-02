@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:window_location_href/window_location_href.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'single.dart';
 import 'batch.dart';
@@ -38,6 +39,8 @@ class MyApp extends StatelessWidget {
       title: 'JunoScreen',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        textTheme:
+            GoogleFonts.getTextTheme('Noto Sans', Theme.of(context).textTheme),
       ),
       home: MyAppHome(key: key),
     );
@@ -87,15 +90,18 @@ class MoreMenueWidiget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton(
-      icon: const Icon(Icons.more_vert,size: 18),
+      icon: const Icon(Icons.more_vert, size: 18),
       itemBuilder: (context) {
         return <PopupMenuEntry>[
           const PopupMenuItem(value: 'description', child: Text('Description')),
           const PopupMenuDivider(),
-          const PopupMenuItem(value: 'general', child: Text('Usage ― General ―')),
           const PopupMenuItem(
-              value: 'intaractive', child: Text('Usage ― Interactive Screening ―')),
-          const PopupMenuItem(value: 'batch', child: Text('Usage ― Batch Screening ―')),
+              value: 'general', child: Text('Usage ― General ―')),
+          const PopupMenuItem(
+              value: 'intaractive',
+              child: Text('Usage ― Interactive Screening ―')),
+          const PopupMenuItem(
+              value: 'batch', child: Text('Usage ― Batch Screening ―')),
           const PopupMenuDivider(),
           const PopupMenuItem(value: 'lists', child: Text('Denial Lists')),
           const PopupMenuDivider(),
@@ -120,16 +126,16 @@ const helps = <String, String>{
   'description': '''
 # Description
 
-This is a client for a system of name screening against denial lists such as US EAR Entity List.
+This is a system of name screening against denial lists such as US EAR Entity List.
 See "Denaial Lists".
 
 ## Features
 - Term fuzzy matching using Levenshtein distance.
 - Divided query terms matching with single list term.
 - Pertial terms matching.
-- Disorder terms matching.
+- Disordered terms matching.
 - Score based filtering respecting term similarity, term order, and term importance of IDF.
-- Perfect matching mode disabling fuzzy matchings for reducing false positives in some cases.
+- Exact matching mode disabling fuzzy matchings for reducing false positives in some cases.
 - Accepting Latin characters, Chinese characters, Katakana characters, and others.
 - Canonicalaization of traditioanal and simplified Chinese characters, and others.
   This makes matching insensitive to character simplification.
@@ -150,14 +156,15 @@ See "Denaial Lists".
 - Official full name is recommended.
 - Discriminating keyword is OK, but too short keyword might cause massive false positives.
 
-## Perfect Matching
+## Exact Matching
+**Note**: Do not use exact matching for names with orthographical variants.
 
 Embrace whole input string with double-quates.
 This disables,
 
 - Term fuzzy matching
 - Pertial terms matching
-- Disorder terms matching
+- Disordered terms matching
 
 But, keeps enable,
 
@@ -167,6 +174,8 @@ But, keeps enable,
   - Unicode normalization
 - Canonicalization of traditional/ simplified Chinese characters
 - Canonicalization of variants of spelling of legal entity types
+
+In other words, only items with score of 100 will be listed out.
 ''',
   'intaractive': '''
 # Usage ― Intractive Screening ―
@@ -182,17 +191,16 @@ But, keeps enable,
 - "Start" means Date/Time of starting the screening.
 - "Duration" means the internal hold time in seconds in the server for screening.
 - "DB Ver.", database version, means the Date/Time when the database from Denial Lists is created.
-  The difference of database version donesn't necesarilly mean some of Denial Lists are modifined,
-  because the database is updated daily regardless of modification of Denial Lists.
+  The difference of database version donesn't necesarilly mean some of Denial Lists are modifined.
 - "Server ID" is just for your information. This is the thread (Dart Isolate) ID in the server.
-- "Perfect" is checked when the input string is embraced with double-quates.
+- "Exact" is checked when the input string is embraced with double-quates.
 - "Fallen Back" is cheked when some termes of preprocessed are removed for some peformance reasons,
   in some very rare cases.
 - "Message" is the message from the server. It's just for your information.
-- The left pain contains the best matched name of each detected items of Denial Lists,
+- The left pain contains the best matched name of each detected item of Denial Lists,
   with matching score and the code of list.
-- The right pain contains the details of each detected items.
-- Click a detected item in the left pain to heading the detail of the item in the right pain,
+- The right pain contains the details of each detected item.
+- Click a detected item in the left pain to scroll the right pain to the details of the item,
   and vice-versa.
 - Click [Get PDF] button to obtain detected items list in PDF format.
   The PDF file doesn't contain the details of the items.
@@ -222,15 +230,15 @@ But, keeps enable,
 |Column|Description|
 |---|---|
 |1st|The number of the row in "names.csv"|
-|2nd|The transaction ID, See "White Results" section.|
+|2nd|The transaction ID, See the "White Results" section.|
 |3rd|The name for screening. Normalized.|
 |4th|The matching score.|
 |5th|The code of list|
 |6th|The best matched name of each detected item. Normalized.|
-|7th|The flag of checked. See "White Results" section.|
+|7th|The flag of checked. See the "White Results" section.|
 |8th|The Date/Time of screening.|
 |9th|The version of the database made from the Denial Lists.|
-|10th|The Date/Time of first detect of item with same name for screening, same transaction ID, same name of detected item, and same code of list|
+|10th|The Date/Time of the first detection of the item with same name for screening, transaction ID, code of list, and best matched name of detected item. See the "White Results" section.|
 
 ## White Results
 
@@ -243,10 +251,9 @@ A file of results from previous batch screening can be used as White Reults with
 - Place the "white_results.csv" at same directory of "names.csv"
 - Kick the next batch screening.
 
-With White Results, each detected item from next batch screening with the same name for screening,
-the sme transaction ID, the same code of list and the same matched name of the item
-in White Results will be marked "true" in 7th column, and the 10th (the Date/Time of first detect)
-will be same as that of the item in the White Results.
+Each detected item which is already listed in White Results with same name for screening, transaction ID,
+code of list, and best matched name of the item will be marked "true" in 7th column,
+and the 10th (the Date/Time of first detect) column will be copied from that of the item in the White Results.
 ''',
   'lists': '''
 # Contained Denial Lists
@@ -267,6 +274,11 @@ will be same as that of the item in the White Results.
 |Unverified List (UVL) - Bureau of Industry and Security|UVL|
 |Foreigh End User List (EUL) - Ministry of Economy, Trade and Industry, Japans|EUL|
 
+## Renewal
+
+Dienial Lists are downloaded daily, and if some of them are changed, the database will be renewed and
+the result cache will be purged.
+
 ## Sources
 
 - [Consolidated Screening List](https://www.trade.gov/consolidated-screening-list "Consolidated Screening List")
@@ -276,7 +288,7 @@ will be same as that of the item in the White Results.
   'license': '''
 # License
 
-## This Client Software
+## This Web Client
 
 MITL
 
