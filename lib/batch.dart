@@ -400,7 +400,7 @@ Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
     if (row.length < 10) {
       continue;
     }
-    if (row[6] != 'true') {
+    if (row[6] == null || row[6]!.toUpperCase() != 'TRUE') {
       continue;
     }
     var txid = row[1] ?? '';
