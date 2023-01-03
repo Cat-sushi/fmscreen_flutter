@@ -96,12 +96,12 @@ class MoreMenueWidiget extends StatelessWidget {
           const PopupMenuItem(value: 'description', child: Text('Description')),
           const PopupMenuDivider(),
           const PopupMenuItem(
-              value: 'general', child: Text('Usage ― General ―')),
+              value: 'general', child: Text('Usage - General -')),
           const PopupMenuItem(
               value: 'intaractive',
-              child: Text('Usage ― Interactive Screening ―')),
+              child: Text('Usage - Interactive Screening -')),
           const PopupMenuItem(
-              value: 'batch', child: Text('Usage ― Batch Screening ―')),
+              value: 'batch', child: Text('Usage - Batch Screening -')),
           const PopupMenuDivider(),
           const PopupMenuItem(value: 'lists', child: Text('Denial Lists')),
           const PopupMenuDivider(),
@@ -272,11 +272,13 @@ and the 10th (the Date/Time of first detect) column will be copied from that of 
 |Sectoral Sanctions Identifications List (SSI) - Treasury Department|SSI|
 |Specially Designated Nationals (SDN) - Treasury Department|SDN|
 |Unverified List (UVL) - Bureau of Industry and Security|UVL|
-|Foreigh End User List (EUL) - Ministry of Economy, Trade and Industry, Japans|EUL|
+|Foreigh End User List (EUL) - Ministry of Economy, Trade and Industry, Japan
+
+|EUL|
 
 ## Renewal
 
-Dienial Lists are downloaded daily, and if some of them are changed, the database will be renewed and
+Denial Lists are downloaded daily, and if some of them are changed, the database will be renewed and
 the result cache will be purged.
 
 ## Sources
