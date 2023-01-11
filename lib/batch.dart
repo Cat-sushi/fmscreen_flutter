@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:html';
 import 'package:file_system_access_api/file_system_access_api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
@@ -186,6 +187,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
     isRunningNotifier.end();
     return;
   }
+  await resultStream.writeAsArrayBuffer(Uint8List.fromList(utf8Bom));
 
   try {
     var logHandle = (await dirHandle.getFileHandle('log.txt', create: true));
