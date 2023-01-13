@@ -144,6 +144,7 @@ See "Denaial Lists".
 - White queries for avoiding screening your company itself and consequent false positives.
 - Results cache for time performance.
 - Interactive Screening.
+- PDF download.
 - Batch Screening.
 - White Results for skiping cheks of false positive
 - And others.
@@ -230,7 +231,7 @@ In other words, only items with score of 100 will be listed out.
 |Column|Description|
 |---|---|
 |1st|The number of the row in "names.csv"|
-|2nd|The transaction ID, See the "White Results" section.|
+|2nd|The transaction ID. See the "White Results" section.|
 |3rd|The name for screening. Normalized.|
 |4th|The matching score.|
 |5th|The code of list|
@@ -272,13 +273,11 @@ and the 10th (the Date/Time of first detect) column will be copied from that of 
 |Sectoral Sanctions Identifications List (SSI) - Treasury Department|SSI|
 |Specially Designated Nationals (SDN) - Treasury Department|SDN|
 |Unverified List (UVL) - Bureau of Industry and Security|UVL|
-|Foreigh End User List (EUL) - Ministry of Economy, Trade and Industry, Japan
-
-|EUL|
+|Foreigh End User List (EUL) - Ministry of Economy, Trade and Industry, Japan|EUL|
 
 ## Renewal
 
-Denial Lists are downloaded daily, and if some of them are changed, the database will be renewed and
+Denial Lists are downloaded every 6 hours, and if some of them are changed, the database will be renewed and
 the result cache will be purged.
 
 ## Sources
