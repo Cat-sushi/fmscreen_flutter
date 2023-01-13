@@ -255,7 +255,7 @@ Future<void> runBatch(
         scheme: scheme,
         host: host,
         port: port,
-        path: '/',
+        path: '/s',
         queryParameters: {'c': '1', 'v': '0'});
     http.Response response;
     try {

@@ -25,7 +25,7 @@ Future<void> screen(String input, WidgetRef ref) async {
       scheme: scheme,
       host: host,
       port: port,
-      path: '/',
+      path: '/s',
       queryParameters: {'c': '1', 'v': '1', 'q': input});
   http.Response response;
   try {
@@ -534,7 +534,7 @@ class DetctedItemsWidget extends ConsumerWidget {
                           scheme: scheme,
                           host: host,
                           port: port,
-                          path: '/pdf',
+                          path: '/s/pdf',
                           queryParameters: {'c': '1', 'v': '1', 'q': input});
                       unawaited(launchUrl(uri));
                     },
