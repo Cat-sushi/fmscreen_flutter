@@ -115,11 +115,10 @@ class MoreMenueWidiget extends StatelessWidget {
           scrollable: true,
           content: SizedBox(
             width: MediaQuery.of(context).size.width,
-            child: SelectionArea(
-              child: MarkdownBody(
-                data: helps[value]!,
-                onTapLink: (text, href, title) => launchUrlString(href!),
-              ),
+            child: MarkdownBody(
+              data: helps[value]!,
+              onTapLink: (text, href, title) => launchUrlString(href!),
+              selectable: true,
             ),
           ),
         ),
