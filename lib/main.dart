@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:window_location_href/window_location_href.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -114,7 +115,12 @@ class MoreMenueWidiget extends StatelessWidget {
           scrollable: true,
           content: SizedBox(
             width: MediaQuery.of(context).size.width,
-            child: MarkdownBody(data: helps[value]!),
+            child: SelectionArea(
+              child: MarkdownBody(
+                data: helps[value]!,
+                onTapLink: (text, href, title) => launchUrlString(href!),
+              ),
+            ),
           ),
         ),
       ),
