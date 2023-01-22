@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:input_history_text_field/input_history_text_field.dart';
-import 'package:json2yaml/json2yaml.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -830,7 +829,7 @@ class BodyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var item = result.detectedItems[index];
-    var yamlString = json2yaml(item.body!).trimRight();
+    var yamlString = json2yamly(item.body!).trimRight();
 
     return Column(children: [
       Container(
@@ -852,4 +851,72 @@ class BodyWidget extends ConsumerWidget {
       ),
     ]);
   }
+}
+
+enum YamlyContext {
+  top,
+  map,
+  list,
+}
+
+String json2yamly(dynamic jsonObject) =>
+    _json2yamly(jsonObject, 0, YamlyContext.top);
+
+const ls = LineSplitter();
+
+String _json2yamly(dynamic jsonObject, int indent, YamlyContext c) {
+  var ret = StringBuffer();
+  if (jsonObject is Map) {
+    var first = true;
+    if (c == YamlyContext.map) {
+      ret.write('\n');
+      first = false;
+    }
+    for (var e in jsonObject.entries) {
+      if (first) {
+        first = false;
+      } else {
+        ret.write('  ' * indent);
+      }
+      ret.write('${e.key}: ');
+      ret.write(_json2yamly(e.value, indent + 1, YamlyContext.map));
+    }
+  } else if (jsonObject is List) {
+    var first = true;
+    if (c == YamlyContext.map) {
+      ret.write('\n');
+      first = false;
+    }
+    for (var e in jsonObject) {
+      if (first) {
+        first = false;
+      } else {
+        ret.write('  ' * indent);
+      }
+      ret.write('- ');
+      ret.write(_json2yamly(e, indent + 1, YamlyContext.list));
+    }
+  } else if (jsonObject is String) {
+    var lines = ls.convert(jsonObject);
+    if (lines.length > 1) {
+      var first = true;
+      if (c == YamlyContext.list || c == YamlyContext.map) {
+        ret.write('\n');
+        first = false;
+      }
+      for (var l in lines) {
+        if (first) {
+          first = false;
+        } else {
+          ret.write('  ' * indent);
+        }
+        ret.write('$l\n');
+      }
+    } else {
+      ret.write('$jsonObject\n');
+    }
+  } else {
+    ret.write('$jsonObject\n');
+  }
+  return ret.toString();
 }
