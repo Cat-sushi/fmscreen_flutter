@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
@@ -829,7 +830,6 @@ class BodyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     var item = result.detectedItems[index];
-    var yamlString = json2yamly(item.body!).trimRight();
 
     return Column(children: [
       Container(
@@ -844,7 +844,7 @@ class BodyWidget extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(yamlString),
+              child: json2yamly(item.body!),
             ),
           ],
         ),
@@ -853,70 +853,130 @@ class BodyWidget extends ConsumerWidget {
   }
 }
 
-enum YamlyContext {
-  top,
-  map,
-  list,
-}
+enum YamlyContext { top, map, list }
 
-String json2yamly(dynamic jsonObject) =>
-    _json2yamly(jsonObject, 0, YamlyContext.top);
+Column json2yamly(dynamic jsonObject) =>
+    Column(children: [..._json2yamly(jsonObject, [], 0, YamlyContext.top)]);
 
 const ls = LineSplitter();
+const leaderStyle = TextStyle(color: Color.fromARGB(255, 122, 44, 2));
 
-String _json2yamly(dynamic jsonObject, int indent, YamlyContext c) {
-  var ret = StringBuffer();
+List<Row> _json2yamly(
+    dynamic jsonObject, List<String> leader, int indent, YamlyContext c) {
+  var ret = <Row>[];
   if (jsonObject is Map) {
     var first = true;
     if (c == YamlyContext.map) {
-      ret.write('\n');
+      ret.add(Row(children: [Text(style: leaderStyle, leader.join())]));
+      leader = [];
       first = false;
     }
     for (var e in jsonObject.entries) {
       if (first) {
         first = false;
       } else {
-        ret.write('  ' * indent);
+        leader.add('  ' * indent);
       }
-      ret.write('${e.key}: ');
-      ret.write(_json2yamly(e.value, indent + 1, YamlyContext.map));
+      leader.add('${e.key}: ');
+      ret.addAll(_json2yamly(e.value, leader, indent + 1, YamlyContext.map));
+      leader = [];
     }
   } else if (jsonObject is List) {
     var first = true;
     if (c == YamlyContext.map) {
-      ret.write('\n');
+      ret.add(Row(children: [
+        Expanded(child: Text(style: leaderStyle, leader.join()))
+      ]));
+      leader = [];
       first = false;
     }
     for (var e in jsonObject) {
       if (first) {
         first = false;
       } else {
-        ret.write('  ' * indent);
+        leader.add('  ' * indent);
       }
-      ret.write('- ');
-      ret.write(_json2yamly(e, indent + 1, YamlyContext.list));
+      leader.add('- ');
+      ret.addAll(_json2yamly(e, leader, indent + 1, YamlyContext.list));
+      leader = [];
     }
   } else if (jsonObject is String) {
     var lines = ls.convert(jsonObject);
     if (lines.length > 1) {
       var first = true;
       if (c == YamlyContext.list || c == YamlyContext.map) {
-        ret.write('\n');
+        ret.add(Row(children: [Text(style: leaderStyle, leader.join())]));
+        leader = [];
         first = false;
       }
       for (var l in lines) {
         if (first) {
           first = false;
         } else {
-          ret.write('  ' * indent);
+          leader.add('  ' * indent);
         }
-        ret.write('$l\n');
+        ret.add(Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(style: leaderStyle, leader.join()),
+            Expanded(
+              child: Text.rich(
+                style: const TextStyle(
+                  backgroundColor: Color.fromRGBO(251, 253, 255, 1.0),
+                ),
+                TextSpan(children: [...clickable(l)]),
+              ),
+            ),
+          ],
+        ));
+        leader = [];
       }
     } else {
-      ret.write('$jsonObject\n');
+      ret.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(style: leaderStyle, leader.join()),
+          Expanded(
+              child: Text.rich(TextSpan(children: [...clickable(jsonObject)]))),
+        ],
+      ));
+      leader = [];
     }
   } else {
-    ret.write('$jsonObject\n');
+    ret.add(Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(style: leaderStyle, leader.join()),
+        Expanded(child: Text(jsonObject)),
+      ],
+    ));
+    leader = [];
   }
-  return ret.toString();
+  return ret;
+}
+
+final url =
+    RegExp(unicode: true, r"https?://[\w!\?/\+\-_~=;\.,\*&@#\$%\(\)'\[\]]+");
+
+Iterable<InlineSpan> clickable(String text) sync* {
+  var matches = url.allMatches(text);
+  var s = 0;
+  for (var m in matches) {
+    if (m.start > s) {
+      yield TextSpan(text: text.substring(s, m.start));
+    }
+    s = m.end;
+    yield TextSpan(
+      recognizer: TapGestureRecognizer()
+        ..onTap = () {
+          var uri = Uri.parse(m.group(0)!);
+          unawaited(launchUrl(uri));
+        },
+      style: const TextStyle(color: Colors.blue),
+      text: m.group(0)!,
+    );
+  }
+  if (s < text.length) {
+    yield TextSpan(text: text.substring(s));
+  }
 }
