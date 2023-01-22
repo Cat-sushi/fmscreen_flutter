@@ -151,7 +151,7 @@ See "Denaial Lists".
 - Interactive Screening.
 - PDF download.
 - Batch Screening.
-- White Results for skiping cheks of false positive
+- White Results for skiping check of false positives.
 - And others.
 ''',
   'general': '''
