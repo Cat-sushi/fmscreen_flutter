@@ -868,18 +868,16 @@ List<Row> _json2yamly(
     var first = true;
     if (c == YamlyContext.map) {
       ret.add(Row(children: [Text(style: leaderStyle, leader.join())]));
-      leader = [];
       first = false;
     }
     for (var e in jsonObject.entries) {
       if (first) {
         first = false;
       } else {
-        leader.add('  ' * indent);
+        leader = ['  ' * indent];
       }
       leader.add('${e.key}: ');
       ret.addAll(_json2yamly(e.value, leader, indent + 1, YamlyContext.map));
-      leader = [];
     }
   } else if (jsonObject is List) {
     var first = true;
@@ -887,18 +885,16 @@ List<Row> _json2yamly(
       ret.add(Row(children: [
         Expanded(child: Text(style: leaderStyle, leader.join()))
       ]));
-      leader = [];
       first = false;
     }
     for (var e in jsonObject) {
       if (first) {
         first = false;
       } else {
-        leader.add('  ' * indent);
+        leader = ['  ' * indent];
       }
       leader.add('- ');
       ret.addAll(_json2yamly(e, leader, indent + 1, YamlyContext.list));
-      leader = [];
     }
   } else if (jsonObject is String) {
     var lines = ls.convert(jsonObject);
@@ -906,14 +902,13 @@ List<Row> _json2yamly(
       var first = true;
       if (c == YamlyContext.list || c == YamlyContext.map) {
         ret.add(Row(children: [Text(style: leaderStyle, leader.join())]));
-        leader = [];
         first = false;
       }
       for (var l in lines) {
         if (first) {
           first = false;
         } else {
-          leader.add('  ' * indent);
+          leader = ['  ' * indent];
         }
         ret.add(Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -929,7 +924,6 @@ List<Row> _json2yamly(
             ),
           ],
         ));
-        leader = [];
       }
     } else {
       ret.add(Row(
@@ -940,7 +934,6 @@ List<Row> _json2yamly(
               child: Text.rich(TextSpan(children: [...clickable(jsonObject)]))),
         ],
       ));
-      leader = [];
     }
   } else {
     ret.add(Row(
@@ -950,13 +943,12 @@ List<Row> _json2yamly(
         Expanded(child: Text(jsonObject)),
       ],
     ));
-    leader = [];
   }
   return ret;
 }
 
 final url =
-    RegExp(unicode: true, r"https?://[\w!\?/\+\-_~=;\.,\*&@#\$%\(\)'\[\]]+");
+    RegExp(unicode: true, r"https?://[\w!\?/\+\-_~=\.,\*&@#\$%\(\)'\[\]]+"); // ;
 
 Iterable<InlineSpan> clickable(String text) sync* {
   var matches = url.allMatches(text);
