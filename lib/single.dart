@@ -944,23 +944,34 @@ Iterable<Row> _json2yamly(
   }
 }
 
-final url = RegExp(
-    unicode: true,
-    r'(\bhttps?:\/\/)?(\bwww\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}'
-    r'\b[-a-zA-Z0-9@:%_\+.~#?&//=]*(?<![.])');
+final _urlRegExp =
+    RegExp(r'(\bhttps?://)?(\bwww\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}'
+        r'\b[-a-zA-Z0-9@:%_\+.~#?&/=]*(?<![.])');
+
+final _mailRegExp = RegExp(r'^[\w\-.]+@(?:[\w\-]+\.)+[\w\-]{2,6}$');
+
+final _httpRegExp = RegExp(r'https?://');
 
 Iterable<InlineSpan> clickable(String text) sync* {
-  var matches = url.allMatches(text);
+  var matches = _urlRegExp.allMatches(text);
   var s = 0;
   for (var m in matches) {
     if (m.start > s) {
       yield TextSpan(text: text.substring(s, m.start));
     }
     s = m.end;
+    var url = m.group(0)!;
+    if (!url.startsWith(_httpRegExp)) {
+      if (url.contains(_mailRegExp)) {
+        yield TextSpan(text: url);
+        continue;
+      }
+      url = 'http://$url';
+    }
     yield TextSpan(
       recognizer: TapGestureRecognizer()
         ..onTap = () {
-          var uri = Uri.parse(m.group(0)!);
+          var uri = Uri.parse(url);
           unawaited(launchUrl(uri));
         },
       style: const TextStyle(color: Colors.blue),
