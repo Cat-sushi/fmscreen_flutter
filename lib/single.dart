@@ -861,13 +861,12 @@ Column json2yamly(dynamic jsonObject) =>
 const ls = LineSplitter();
 const leaderStyle = TextStyle(color: Color.fromARGB(255, 122, 44, 2));
 
-List<Row> _json2yamly(
-    dynamic jsonObject, List<String> leader, int indent, YamlyContext c) {
-  var ret = <Row>[];
+Iterable<Row> _json2yamly(
+    dynamic jsonObject, List<String> leader, int indent, YamlyContext c) sync* {
   if (jsonObject is Map) {
     var first = true;
     if (c == YamlyContext.map) {
-      ret.add(Row(children: [Text(style: leaderStyle, leader.join())]));
+      yield Row(children: [Text(style: leaderStyle, leader.join())]);
       first = false;
     }
     for (var e in jsonObject.entries) {
@@ -877,14 +876,13 @@ List<Row> _json2yamly(
         leader = ['  ' * indent];
       }
       leader.add('${e.key}: ');
-      ret.addAll(_json2yamly(e.value, leader, indent + 1, YamlyContext.map));
+      yield* _json2yamly(e.value, leader, indent + 1, YamlyContext.map);
     }
   } else if (jsonObject is List) {
     var first = true;
     if (c == YamlyContext.map) {
-      ret.add(Row(children: [
-        Expanded(child: Text(style: leaderStyle, leader.join()))
-      ]));
+      yield Row(
+          children: [Expanded(child: Text(style: leaderStyle, leader.join()))]);
       first = false;
     }
     for (var e in jsonObject) {
@@ -894,14 +892,14 @@ List<Row> _json2yamly(
         leader = ['  ' * indent];
       }
       leader.add('- ');
-      ret.addAll(_json2yamly(e, leader, indent + 1, YamlyContext.list));
+      yield* _json2yamly(e, leader, indent + 1, YamlyContext.list);
     }
   } else if (jsonObject is String) {
     var lines = ls.convert(jsonObject);
     if (lines.length > 1) {
       var first = true;
       if (c == YamlyContext.list || c == YamlyContext.map) {
-        ret.add(Row(children: [Text(style: leaderStyle, leader.join())]));
+        yield Row(children: [Text(style: leaderStyle, leader.join())]);
         first = false;
       }
       for (var l in lines) {
@@ -910,7 +908,7 @@ List<Row> _json2yamly(
         } else {
           leader = ['  ' * indent];
         }
-        ret.add(Row(
+        yield Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(style: leaderStyle, leader.join()),
@@ -923,32 +921,31 @@ List<Row> _json2yamly(
               ),
             ),
           ],
-        ));
+        );
       }
     } else {
-      ret.add(Row(
+      yield Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(style: leaderStyle, leader.join()),
           Expanded(
               child: Text.rich(TextSpan(children: [...clickable(jsonObject)]))),
         ],
-      ));
+      );
     }
   } else {
-    ret.add(Row(
+    yield Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(style: leaderStyle, leader.join()),
         Expanded(child: Text(jsonObject)),
       ],
-    ));
+    );
   }
-  return ret;
 }
 
-final url =
-    RegExp(unicode: true, r"https?://[\w!\?/\+\-_~=\.,\*&@#\$%\(\)'\[\]]+"); // ;
+final url = RegExp(
+    unicode: true, r"https?://[\w!\?/\+\-_~=\.,\*&@#\$%\(\)'\[\]]+"); // ;
 
 Iterable<InlineSpan> clickable(String text) sync* {
   var matches = url.allMatches(text);
