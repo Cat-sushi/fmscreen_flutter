@@ -898,7 +898,7 @@ Iterable<Row> _json2yamly(
     var lines = ls.convert(jsonObject);
     if (lines.length > 1) {
       var first = true;
-      if (c == YamlyContext.list || c == YamlyContext.map) {
+      if (c == YamlyContext.map) {
         yield Row(children: [Text(style: leaderStyle, leader.join())]);
         first = false;
       }
