@@ -945,7 +945,9 @@ Iterable<Row> _json2yamly(
 }
 
 final url = RegExp(
-    unicode: true, r"https?://[\w!\?/\+\-_~=\.,\*&@#\$%\(\)'\[\]]+"); // ;
+    unicode: true,
+    r'(\bhttps?:\/\/)?(\bwww\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}'
+    r'\b[-a-zA-Z0-9@:%_\+.~#?&//=]*(?<![.])');
 
 Iterable<InlineSpan> clickable(String text) sync* {
   var matches = url.allMatches(text);
