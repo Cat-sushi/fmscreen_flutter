@@ -39,6 +39,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'JunoScreen',
       theme: ThemeData(
+        useMaterial3: false,
         primarySwatch: Colors.blue,
         textTheme:
             GoogleFonts.getTextTheme('Noto Sans', Theme.of(context).textTheme),
