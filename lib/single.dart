@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
-import 'package:input_history_text_field/input_history_text_field.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -68,10 +67,8 @@ class QueryInputWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return InputHistoryTextField(
-      historyKey: 'inputstring',
-      limit: 5,
-      autofocus: false,
+    return TextField(
+      autofocus: true,
       maxLines: 1,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
@@ -256,12 +253,11 @@ class PreprocessedQueryWidget extends ConsumerWidget {
                 border:
                     Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
                 color: const Color.fromRGBO(251, 253, 255, 1.0)),
-            child: SelectionArea(
-              child: SelectableText.rich(
-                TextSpan(children: [
-                  ...spans(result.queryStatus.terms, result.queryStatus.letType)
-                ]),
-              ),
+            child: SelectableText.rich(
+              textAlign: TextAlign.left,
+              TextSpan( children: [
+                ...spans(result.queryStatus.terms, result.queryStatus.letType)
+              ]),
             ),
           ),
         ),
