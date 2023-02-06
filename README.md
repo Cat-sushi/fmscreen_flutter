@@ -4,15 +4,15 @@
 
 This is a system of name screening against denial lists such as US EAR Entity List.
 
-## The Web Service
+### The Web Service
 
 [JunoScreen](https://fms.catsushi.net/)
 
-## The Server
+### The Server
 
 [FMScreen](https://github.com/Cat-sushi/fmscreen)
 
-## The Text Matching Engine
+### The Text Matching Engine
 
 [FMatch](https://github.com/Cat-sushi/fmatch)
 
