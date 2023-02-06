@@ -4,7 +4,7 @@
 
 This is a system of name screening against denial lists such as US EAR Entity List.
 
-## The Web Application
+## The Web Service
 
 [JunoScreen](https://fms.catsushi.net/)
 
