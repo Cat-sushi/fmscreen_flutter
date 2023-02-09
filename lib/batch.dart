@@ -63,8 +63,10 @@ late DateTime currentLap;
 late DateTime lastLap;
 
 var bulkSize = 100;
-var cacheHits = 0;
-var cacheHits2 = 0;
+var cacheHitCount = 0;
+var cacheHitCount2 = 0;
+var whiteResultHitCount = 0;
+var detectedItemCount = 0;
 
 class BatchScreen extends ConsumerWidget {
   const BatchScreen({super.key});
@@ -205,10 +207,12 @@ Future<void> batchDirPick(WidgetRef ref) async {
     await dumpUnrefferredWhiteResults(whiteResults, resultStream);
   } finally {
     await resultStream.close();
+    await printMessage(
+        'Batch completed at: ${DateTime.now().toUtc().toIso8601String()}',
+        log: true);
     await logStream!.close();
     await dirHandle.removeEntry('lockfile');
     isRunningNotifier.end();
-    await printMessage('Batch completed.');
   }
 }
 
@@ -221,11 +225,14 @@ Future<void> runBatch(
   startTime = DateTime.now();
   lastLap = startTime;
   currentLap = lastLap;
-  cacheHits = 0;
-  cacheHits2 = 0;
+  cacheHitCount = 0;
+  cacheHitCount2 = 0;
+  detectedItemCount = 0;
+  whiteResultHitCount = 0;
 
   await printMessage('Server: $scheme://$host:$port/', log: true);
-  await printMessage('Start batch at: ${startTime.toUtc().toIso8601String()}');
+  await printMessage('Start batch at: ${startTime.toUtc().toIso8601String()}',
+      log: true);
 
   int queryCount = 0;
   for (var idx = 0; idx < names.length; idx += bulkSize) {
@@ -263,7 +270,7 @@ Future<void> runBatch(
           headers: {'content-type': 'application/json; charset=utf-8'},
           body: bulk);
     } catch (e) {
-      await printMessage('Server not responding.');
+      await printMessage('Server not responding.', log: true);
       return;
     }
     var jsonString = response.body;
@@ -280,7 +287,11 @@ Future<void> runBatch(
   await printMessage('Dulation: ${endTime.difference(startTime).inSeconds}',
       log: true);
   await printMessage('Number of queries: $queryCount', log: true);
-  await printMessage('Number of chache hits: $cacheHits', log: true);
+  await printMessage('Number of cache hits: $cacheHitCount', log: true);
+  await printMessage('Number of detected items: $detectedItemCount', log: true);
+  await printMessage(
+      'Number of newly detected items: ${detectedItemCount - whiteResultHitCount}',
+      log: true);
 }
 
 Future<void> outputResults(
@@ -299,8 +310,8 @@ Future<void> outputResults(
       continue;
     }
     if (result.queryStatus.message != '') {
-      cacheHits++;
-      cacheHits2++;
+      cacheHitCount++;
+      cacheHitCount2++;
     }
     await resultStream
         .writeAsText(formatOutput(idx + i, txids[i], result, whiteResults));
@@ -309,8 +320,8 @@ Future<void> outputResults(
       await printMessage(
           '${idx + i + 1} ${currentLap.difference(startTime).inMilliseconds}'
           ' ${currentLap.difference(lastLap).inMilliseconds}'
-          '  $cacheHits2 $cacheHits');
-      cacheHits2 = 0;
+          '  $cacheHitCount2 $cacheHitCount');
+      cacheHitCount2 = 0;
       lastLap = currentLap;
     }
   }
@@ -331,11 +342,13 @@ String formatOutput(
         e.matchedNames[0].entry.string);
     var value = whiteResults[key];
     var checked = false;
+    detectedItemCount++;
     if (value != null) {
       firstDetectedDateTime = value.detectedDateTime;
       if (value.count > 0) {
         value.count--;
         checked = true;
+        whiteResultHitCount++;
       }
     }
     csvLine.write(ix + 1);
