@@ -255,7 +255,7 @@ class PreprocessedQueryWidget extends ConsumerWidget {
                 color: const Color.fromRGBO(251, 253, 255, 1.0)),
             child: SelectableText.rich(
               textAlign: TextAlign.left,
-              TextSpan( children: [
+              TextSpan(children: [
                 ...spans(result.queryStatus.terms, result.queryStatus.letType)
               ]),
             ),
@@ -268,8 +268,8 @@ class PreprocessedQueryWidget extends ConsumerWidget {
 
 Iterable<TextSpan> spans(List<Term> terms, LetType letType) sync* {
   for (var term in terms) {
-    var lineColor = letType == LetType.postfix && term == terms.last ||
-            letType == LetType.prefix && term == terms.first
+    var lineColor = letType == LetType.postfix && identical(term, terms.last) ||
+            letType == LetType.prefix && identical(term, terms.first)
         ? const Color.fromRGBO(0, 191, 127, 1.0)
         : const Color.fromRGBO(127, 127, 127, 1.0);
     yield TextSpan(
