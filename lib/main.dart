@@ -226,7 +226,7 @@ In other words, only items with score of 100 will be listed out.
 "names.csv" is in CSV  format.
 
 |Column|Description|
-|---|---|
+|---:|:---|
 |1st|Every one line contains one name for screening.|
 |2nd|You can optionally specify a transaction ID for each line. See "White Results" section.|
 
@@ -235,7 +235,7 @@ In other words, only items with score of 100 will be listed out.
 "results.csv" is in CSV format.
 
 |Column|Description|
-|---|---|
+|---:|:---|
 |1st|The number of the row in "names.csv"|
 |2nd|The transaction ID. See the "White Results" section.|
 |3rd|The name for screening. Normalized.|
@@ -266,7 +266,7 @@ and the 10th (the Date/Time of first detect) column will be copied from that of 
 # Contained Denial Lists
 
 |List Name|Code of Denial List|
-|---|---|
+|:---|:---:|
 |Capta List (CAP) - Treasury Department|CAP|
 |Denied Persons List (DPL) - Bureau of Industry and Security|DPL|
 |Entity List (EL) - Bureau of Industry and Security|EL|
