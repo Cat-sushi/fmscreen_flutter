@@ -19,7 +19,7 @@ This is a system of name screening against denial lists such as US EAR Entity Li
 ## Screen Shots
 
 ![Screenshot from 2023-02-15 09-48-10](https://user-images.githubusercontent.com/10280770/218896580-32431404-1c01-404c-8c50-8981afba31c4.png)
-![Screenshot from 2023-02-13 23-08-33](https://user-images.githubusercontent.com/10280770/218480504-54378727-7dbd-43d2-bcbc-fe5b78df26ab.png)
+![Screenshot from 2023-02-15 09-54-09](https://user-images.githubusercontent.com/10280770/218897252-7b8a0748-d515-4f34-9ec8-f2d443fc9149.png)
 
 ## Features
 - Term fuzzy matching using Levenshtein distance.
