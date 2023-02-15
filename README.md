@@ -18,7 +18,7 @@ This is a system of name screening against denial lists such as US EAR Entity Li
 
 ## Screen Shots
 
-![Screenshot from 2023-02-13 23-07-42](https://user-images.githubusercontent.com/10280770/218480416-41cd5f94-edf7-461f-8314-f716c53b0966.png)
+![Screenshot from 2023-02-15 09-46-46](https://user-images.githubusercontent.com/10280770/218896415-af65223c-0e27-4f13-89a4-e526872e7422.png)
 ![Screenshot from 2023-02-13 23-08-33](https://user-images.githubusercontent.com/10280770/218480504-54378727-7dbd-43d2-bcbc-fe5b78df26ab.png)
 
 ## Features
