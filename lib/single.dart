@@ -114,11 +114,11 @@ class ScreeningResultWidget extends ConsumerWidget {
       Expanded(
         child: Row(
           children: <Widget>[
-            Expanded(
+            Flexible(
               child: DetctedItemsWidget(result),
             ),
             const SizedBox(width: 8.0),
-            Expanded(
+            Flexible(
               child: DetectedItemsDetailWidget(result),
             ),
           ],
@@ -145,90 +145,26 @@ class QueryStatusWidget extends ConsumerWidget {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          InputStringWidget(result),
-          const SizedBox(height: 4),
-          NormalizedQueryWidget(result),
-          const SizedBox(height: 4),
           PreprocessedQueryWidget(result),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              QueryScoreWidget(result),
-              const SizedBox(width: 8),
-              QueryStartTimeWidget(result),
-              const SizedBox(width: 8),
-              QueryDurationWidget(result),
-              const SizedBox(width: 8),
-              DbVersionWidget(result),
-              const SizedBox(width: 8),
-              ServerIdWidget(result),
-              const SizedBox(width: 8),
-              PerfectMatchingWidget(result),
-              const SizedBox(width: 8),
-              QueryFallenBackWidget(result),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 4.0,
+              children: [
+                QueryScoreWidget(result),
+                QueryStartTimeWidget(result),
+                QueryDurationWidget(result),
+                DbVersionWidget(result),
+                ServerIdWidget(result),
+                if (result.queryStatus.message != '')
+                  ServerMessageWidget(result),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
-          ServerMessageWidget(result),
         ],
       ),
-    );
-  }
-}
-
-class InputStringWidget extends ConsumerWidget {
-  const InputStringWidget(
-    this.result, {
-    Key? key,
-  }) : super(key: key);
-
-  final ScreeningResult result;
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return Row(
-      children: [
-        const Text('Input String: '),
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
-              color: const Color.fromRGBO(251, 253, 255, 1.0),
-            ),
-            padding: const EdgeInsets.all(4),
-            child: SelectableText(result.queryStatus.inputString),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class NormalizedQueryWidget extends ConsumerWidget {
-  const NormalizedQueryWidget(
-    this.result, {
-    Key? key,
-  }) : super(key: key);
-
-  final ScreeningResult result;
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return Row(
-      children: [
-        const Text('Normalized: '),
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
-              color: const Color.fromRGBO(251, 253, 255, 1.0),
-            ),
-            padding: const EdgeInsets.all(4),
-            child: SelectableText(result.queryStatus.rawQuery),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -245,6 +181,10 @@ class PreprocessedQueryWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return Row(
       children: [
+        if (result.queryStatus.perfectMatching) PerfectMatchingWidget(result),
+        if (result.queryStatus.perfectMatching) const SizedBox(width: 8.0),
+        if (result.queryStatus.queryFallenBack) QueryFallenBackWidget(result),
+        if (result.queryStatus.queryFallenBack) const SizedBox(width: 8.0),
         const Text('Preprocessed: '),
         Expanded(
           child: Container(
@@ -290,6 +230,34 @@ Iterable<TextSpan> spans(List<Term> terms, LetType letType) sync* {
   }
 }
 
+class PerfectMatchingWidget extends ConsumerWidget {
+  const PerfectMatchingWidget(
+    this.result, {
+    Key? key,
+  }) : super(key: key);
+
+  final ScreeningResult result;
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return const Chip(label: Text('Exact'));
+  }
+}
+
+class QueryFallenBackWidget extends ConsumerWidget {
+  const QueryFallenBackWidget(
+    this.result, {
+    Key? key,
+  }) : super(key: key);
+
+  final ScreeningResult result;
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return const Chip(label: Text('Fallen Back'));
+  }
+}
+
 class QueryScoreWidget extends ConsumerWidget {
   const QueryScoreWidget(
     this.result, {
@@ -303,6 +271,7 @@ class QueryScoreWidget extends ConsumerWidget {
     var score = result.queryStatus.queryScore * 100;
     var scoreString = score.floor().toString();
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text('Query Score: '),
         Container(
@@ -331,6 +300,7 @@ class QueryStartTimeWidget extends ConsumerWidget {
     var start = result.queryStatus.start.toIso8601String();
     var startShort = '${start.substring(0, 19)}Z';
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text('Start: '),
         Container(
@@ -358,6 +328,7 @@ class QueryDurationWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     var duration = result.queryStatus.durationInMilliseconds / 1000;
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text('Duration: '),
         Container(
@@ -386,6 +357,7 @@ class DbVersionWidget extends ConsumerWidget {
     var a = result.queryStatus.databaseVersion;
     var dbver = '${a.substring(0, 19)}Z';
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text('DB Ver.: '),
         Container(
@@ -412,6 +384,7 @@ class ServerIdWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text('Server ID: '),
         Container(
@@ -427,46 +400,6 @@ class ServerIdWidget extends ConsumerWidget {
   }
 }
 
-class PerfectMatchingWidget extends ConsumerWidget {
-  const PerfectMatchingWidget(
-    this.result, {
-    Key? key,
-  }) : super(key: key);
-
-  final ScreeningResult result;
-
-  @override
-  Widget build(BuildContext context, ref) {
-    var pf = result.queryStatus.perfectMatching;
-    return Chip(
-      label: Text('Exact',
-          style: TextStyle(
-              color: pf ? null : const Color.fromRGBO(192, 192, 192, 1.0))),
-      avatar: pf ? const Icon(Icons.check_circle) : null,
-    );
-  }
-}
-
-class QueryFallenBackWidget extends ConsumerWidget {
-  const QueryFallenBackWidget(
-    this.result, {
-    Key? key,
-  }) : super(key: key);
-
-  final ScreeningResult result;
-
-  @override
-  Widget build(BuildContext context, ref) {
-    var fb = result.queryStatus.queryFallenBack;
-    return Chip(
-      label: Text('Fallen Back',
-          style: TextStyle(
-              color: fb ? null : const Color.fromRGBO(192, 192, 192, 1.0))),
-      avatar: fb ? const Icon(Icons.check_circle) : null,
-    );
-  }
-}
-
 class ServerMessageWidget extends ConsumerWidget {
   const ServerMessageWidget(
     this.result, {
@@ -478,19 +411,18 @@ class ServerMessageWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text('Message: '),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
-              color: const Color.fromRGBO(251, 253, 255, 1.0),
-            ),
-            child: SelectableText(
-              result.queryStatus.message,
-              style: const TextStyle(color: Color.fromARGB(255, 122, 44, 2)),
-            ),
+        Container(
+          padding: const EdgeInsets.all(4.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color.fromRGBO(159, 159, 159, 1)),
+            color: const Color.fromRGBO(251, 253, 255, 1.0),
+          ),
+          child: SelectableText(
+            result.queryStatus.message,
+            style: const TextStyle(color: Color.fromARGB(255, 122, 44, 2)),
           ),
         ),
       ],

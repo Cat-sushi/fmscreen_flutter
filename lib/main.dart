@@ -187,11 +187,12 @@ In other words, only items with score of 100 will be listed out.
   'intaractive': '''
 # Usage ― Intractive Screening ―
 
-- "Input String" is the string you inputted.
-- "Normalized" is normalized string of your input string.
 - "Preprocessed" is a set of extracted "words" from preprocess.
   Preprocess includes canonicalization of traditional/ simplified Chinese characters,
   canonicalization of variants of spelling of legal entyty types, and others.
+- "Preprocessed" is marked "Exact" when the input string is embraced with double-quates.
+- "Preprocessed" is marked "Fallen Back" when some termes of preprocessed are removed for some peformance reasons,
+  in some very rare cases.
 - "Query Score" means the discrimination of input strings. 
   Input strings with low query score might cause massive false positives,
   while high query score does not necessarily mean a good input string.
@@ -200,9 +201,6 @@ In other words, only items with score of 100 will be listed out.
 - "DB Ver.", database version, means the Date/Time when the database from Denial Lists is created.
   The difference of database version donesn't necesarilly mean some of Denial Lists are modifined.
 - "Server ID" is just for your information. This is the thread (Dart Isolate) ID in the server.
-- "Exact" is checked when the input string is embraced with double-quates.
-- "Fallen Back" is cheked when some termes of preprocessed are removed for some peformance reasons,
-  in some very rare cases.
 - "Message" is the message from the server. It's just for your information.
 - The left pain contains the best matched name of each detected item of Denial Lists,
   with matching score and the code of list.
