@@ -25,6 +25,9 @@ const utf8Bom = [0xEF, 0xBB, 0xBF];
 
 List<List<String?>> parseCsvLines(String file) {
   var lines = file.split(_lineSpritter);
+  if(lines.last == '') {
+    lines = lines.sublist(0, lines.length - 1);
+  }
   var buff = <List<String?>>[];
   var row = '';
   for (var line in lines) {
