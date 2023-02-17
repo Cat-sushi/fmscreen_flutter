@@ -183,6 +183,13 @@ But, keeps enable,
 - Canonicalization of variants of spelling of legal entity types
 
 In other words, only items with score of 100 will be listed out.
+
+## Item Identification.
+
+There is no permanent identifier of items, other than normalized names.
+
+Use exact matching with narmalized names to retreave detected items.
+
 ''',
   'intaractive': '''
 # Usage ― Intractive Screening ―
