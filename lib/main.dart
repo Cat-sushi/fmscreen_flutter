@@ -136,6 +136,7 @@ This is a system of name screening against denial lists such as US EAR Entity Li
 See "Denaial Lists".
 
 ## Features
+
 - Term fuzzy matching using Levenshtein distance.
 - Divided query terms matching with single list term.
 - Pertial terms matching.
@@ -164,6 +165,7 @@ See "Denaial Lists".
 - Discriminating keyword is OK, but too short keyword might cause massive false positives.
 
 ## Exact Matching
+
 **Note**: Do not use exact matching for names with orthographical variants.
 
 Embrace whole input string with double-quates.
@@ -184,9 +186,9 @@ But, keeps enable,
 
 In other words, only items with score of 100 will be listed out.
 
-## Item Identification.
+## Item Identification
 
-There is no permanent identifier of items, other than normalized names.
+There are no permanent uniform identifiers of items, other than the normalized names.
 
 Use exact matching with narmalized names to retreave detected items.
 
@@ -200,7 +202,7 @@ Use exact matching with narmalized names to retreave detected items.
 - "Preprocessed" is marked "Exact" when the input string is embraced with double-quates.
 - "Preprocessed" is marked "Fallen Back" when some termes of preprocessed are removed for some peformance reasons,
   in some very rare cases.
-- "Query Score" means the discrimination of input strings. 
+- "Query Score" means the discrimination of input strings.
   Input strings with low query score might cause massive false positives,
   while high query score does not necessarily mean a good input string.
 - "Start" means Date/Time of starting the screening.
@@ -219,6 +221,7 @@ Use exact matching with narmalized names to retreave detected items.
 ''',
   'batch': '''
 # Usage ― Batch Screening ―
+
 ## UI
 
 - Make a name list for screening in CSV format with name of "names.csv".

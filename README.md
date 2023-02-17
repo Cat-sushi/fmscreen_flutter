@@ -22,6 +22,7 @@ This is a system of name screening against denial lists such as US EAR Entity Li
 ![Screenshot from 2023-02-15 09-54-09](https://user-images.githubusercontent.com/10280770/218897252-7b8a0748-d515-4f34-9ec8-f2d443fc9149.png)
 
 ## Features
+
 - Term fuzzy matching using Levenshtein distance.
 - Divided query terms matching with single list term.
 - Pertial terms matching.
@@ -49,6 +50,7 @@ This is a system of name screening against denial lists such as US EAR Entity Li
 - Discriminating keyword is OK, but too short keyword might cause massive false positives.
 
 ### Exact Matching
+
 **Note**: Do not use exact matching for names with orthographical variants.
 
 Embrace whole input string with double-quates.
@@ -69,9 +71,9 @@ But, keeps enable,
 
 In other words, only items with score of 100 will be listed out.
 
-### Item Identification.
+### Item Identification
 
-There is no permanent identifier of items, other than normalized names.
+There are no permanent uniform identifiers of items, other than the normalized names.
 
 Use exact matching with narmalized names to retreave detected items.
 
@@ -83,7 +85,7 @@ Use exact matching with narmalized names to retreave detected items.
 - "Preprocessed" is marked "Exact" when the input string is embraced with double-quates.
 - "Preprocessed" is marked "Fallen Back" when some termes of preprocessed are removed for some peformance reasons,
   in some very rare cases.
-- "Query Score" means the discrimination of input strings. 
+- "Query Score" means the discrimination of input strings.
   Input strings with low query score might cause massive false positives,
   while high query score does not necessarily mean a good input string.
 - "Start" means Date/Time of starting the screening.
@@ -101,6 +103,7 @@ Use exact matching with narmalized names to retreave detected items.
   The PDF file doesn't contain the details of the items.
 
 ## Usage ― Batch Screening ―
+
 ### UI
 
 - Make a name list for screening in CSV format with name of "names.csv".
