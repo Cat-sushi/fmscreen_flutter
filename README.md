@@ -18,8 +18,8 @@ This is a system of name screening against denial lists such as US EAR Entity Li
 
 ## Screen Shots
 
-![Screenshot from 2023-02-06 23-07-56](https://user-images.githubusercontent.com/10280770/216993394-45ba5106-2167-4132-b308-c39b34ce79b5.png)
-![Screenshot from 2023-02-07 01-23-43](https://user-images.githubusercontent.com/10280770/217027254-299cbed1-aad6-4714-bc11-711eb48b38be.png)
+![Screenshot from 2023-02-15 09-48-10](https://user-images.githubusercontent.com/10280770/218896580-32431404-1c01-404c-8c50-8981afba31c4.png)
+![Screenshot from 2023-02-15 09-54-09](https://user-images.githubusercontent.com/10280770/218897252-7b8a0748-d515-4f34-9ec8-f2d443fc9149.png)
 
 ## Features
 - Term fuzzy matching using Levenshtein distance.
@@ -71,11 +71,12 @@ In other words, only items with score of 100 will be listed out.
 
 ## Usage ― Intractive Screening ―
 
-- "Input String" is the string you inputted.
-- "Normalized" is normalized string of your input string.
 - "Preprocessed" is a set of extracted "words" from preprocess.
   Preprocess includes canonicalization of traditional/ simplified Chinese characters,
   canonicalization of variants of spelling of legal entyty types, and others.
+- "Preprocessed" is marked "Exact" when the input string is embraced with double-quates.
+- "Preprocessed" is marked "Fallen Back" when some termes of preprocessed are removed for some peformance reasons,
+  in some very rare cases.
 - "Query Score" means the discrimination of input strings. 
   Input strings with low query score might cause massive false positives,
   while high query score does not necessarily mean a good input string.
@@ -84,9 +85,6 @@ In other words, only items with score of 100 will be listed out.
 - "DB Ver.", database version, means the Date/Time when the database from Denial Lists is created.
   The difference of database version donesn't necesarilly mean some of Denial Lists are modifined.
 - "Server ID" is just for your information. This is the thread (Dart Isolate) ID in the server.
-- "Exact" is checked when the input string is embraced with double-quates.
-- "Fallen Back" is cheked when some termes of preprocessed are removed for some peformance reasons,
-  in some very rare cases.
 - "Message" is the message from the server. It's just for your information.
 - The left pain contains the best matched name of each detected item of Denial Lists,
   with matching score and the code of list.
