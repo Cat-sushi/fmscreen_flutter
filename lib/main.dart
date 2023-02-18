@@ -190,7 +190,7 @@ In other words, only items with score of 100 will be listed out.
 
 There are no permanent uniform identifiers of items, other than the normalized names.
 
-Use exact matching with narmalized names to retreave detected items.
+Use exact matching with narmalized names to retreave the detected items.
 
 ''',
   'intaractive': '''
@@ -211,7 +211,7 @@ Use exact matching with narmalized names to retreave detected items.
   The difference of database version donesn't necesarilly mean some of Denial Lists are modifined.
 - "Server ID" is just for your information. This is the thread (Dart Isolate) ID in the server.
 - "Message" is the message from the server. It's just for your information.
-- The left pain contains the best matched name of each detected item of Denial Lists,
+- The left pain contains the best matched normalized name of each detected item of Denial Lists,
   with matching score and the code of list.
 - The right pain contains the details of each detected item.
 - Click a detected item in the left pain to scroll the right pain to the details of the item,
