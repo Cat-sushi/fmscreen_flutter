@@ -69,6 +69,9 @@ class QueryInputWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return TextField(
       autofocus: true,
+      controller: TextEditingController(
+          text:
+              ref.read(resultProvider.notifier).state?.queryStatus.inputString),
       maxLines: 1,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
