@@ -1,3 +1,7 @@
+// Copyright 2022, 2023 Yako
+// This code is licensed under MIT license (see LICENSE for details)
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
@@ -27,7 +31,9 @@ void main() {
     }
   }
 
-  setUrlStrategy(PathUrlStrategy());
+  if (kIsWeb) {
+    setUrlStrategy(PathUrlStrategy());
+  }
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -107,7 +113,7 @@ class MoreMenueWidiget extends StatelessWidget {
           const PopupMenuDivider(),
           const PopupMenuItem(value: 'lists', child: Text('Denial Lists')),
           const PopupMenuDivider(),
-          const PopupMenuItem(value: 'license', child: Text('License')),
+          const PopupMenuItem(value: 'license', child: Text('License and Repositories')),
         ];
       },
       onSelected: (value) => showDialog(
@@ -301,17 +307,33 @@ the result cache will be purged.
 
 ''',
   'license': '''
-# License
+# License and Repositories
+
+## The Web Service
+
+
 
 ## This Web Client
 
 MITL
+
+[fmscreen_flutter](https://github.com/Cat-sushi/fmscreen_flutter "fmscreen_flutter")
 
 ## The Server
 
 AGPL3.0
 
 Contact me if you need another different License.
+
+[fmscreen](https://github.com/Cat-sushi/fmscreen "fmscreen")
+
+## The Engine
+
+AGPL3.0
+
+Contact me if you need another different License.
+
+[fmatch](https://github.com/Cat-sushi/fmatch "fmatch")
 
 ## Dependences
 

@@ -1,3 +1,6 @@
+// Copyright 2022, 2023 Yako
+// This code is licensed under MIT license (see LICENSE for details)
+
 import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
