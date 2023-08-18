@@ -339,7 +339,7 @@ String formatOutput(
   var csvLine = StringBuffer();
   for (var e in result.detectedItems) {
     var detectedDateTime = result.queryStatus.start.toUtc().toIso8601String();
-    var firstDetectedDateTime = detectedDateTime;
+    var firstDbVersion = result.queryStatus.databaseVersion;
 
     var key = WhiteResultKey(txid, result.queryStatus.rawQuery, e.listCode,
         e.matchedNames[0].entry.string);
@@ -347,7 +347,7 @@ String formatOutput(
     var checked = false;
     detectedItemCount++;
     if (value != null) {
-      firstDetectedDateTime = value.detectedDateTime;
+      firstDbVersion = value.firstDetectedDbVersion;
       if (value.count > 0) {
         value.count--;
         checked = true;
@@ -379,7 +379,7 @@ String formatOutput(
     csvLine.write(r',');
     csvLine.write(quoteCsvCell(result.queryStatus.databaseVersion));
     csvLine.write(r',');
-    csvLine.write(quoteCsvCell(firstDetectedDateTime));
+    csvLine.write(quoteCsvCell(firstDbVersion));
     csvLine.write('\r\n');
   }
   return csvLine.toString();
@@ -405,9 +405,13 @@ class WhiteResultKey {
 }
 
 class WhiteResultValue {
-  WhiteResultValue(this.count, this.detectedDateTime);
+  WhiteResultValue(this.count, this.score, this.lastDetectedDateTime,
+      this.lastDetectedDbVersion, this.firstDetectedDbVersion);
   int count;
-  String detectedDateTime;
+  final int score;
+  final DateTime lastDetectedDateTime;
+  final String lastDetectedDbVersion;
+  String firstDetectedDbVersion;
 }
 
 Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
@@ -423,19 +427,24 @@ Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
     }
     var txid = row[1] ?? '';
     var name = row[2] ?? '';
+    var score = int.tryParse(row[3] ?? '0') ?? 0;
     var code = row[4] ?? '';
     var matchedName = row[5] ?? '';
     var key = WhiteResultKey(txid, name, code, matchedName);
     var value = ret[key];
-    var detectedDateTime = row[9] ?? '';
+    var lastDetectedDateTime = DateTime.tryParse(row[7] ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+    var lastDbVersion = row[8] ?? '1970-01-01T00:00:00.000Z';
+    var detectedDbVersion = row[9] ?? '';
     if (value == null) {
-      ret[key] = WhiteResultValue(1, detectedDateTime);
+      ret[key] = WhiteResultValue(
+          1, score, lastDetectedDateTime, lastDbVersion, detectedDbVersion);
     } else {
       value.count++;
-      value.detectedDateTime =
-          detectedDateTime.compareTo(value.detectedDateTime) < 0
-              ? detectedDateTime
-              : value.detectedDateTime;
+      value.firstDetectedDbVersion =
+          detectedDbVersion.compareTo(value.firstDetectedDbVersion) < 0
+              ? detectedDbVersion
+              : value.firstDetectedDbVersion;
     }
   }
   return ret;
@@ -454,7 +463,7 @@ Future<void> dumpUnrefferredWhiteResults(
       csvLine.write(r',');
       csvLine.write(quoteCsvCell(e.key.name));
       csvLine.write(r',');
-      csvLine.write('0');
+      csvLine.write(e.value.score.toString());
       csvLine.write(r',');
       csvLine.write(quoteCsvCell(e.key.code));
       csvLine.write(r',');
@@ -462,11 +471,12 @@ Future<void> dumpUnrefferredWhiteResults(
       csvLine.write(r',');
       csvLine.write('true');
       csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.value.detectedDateTime));
+      csvLine.write(
+          quoteCsvCell(e.value.lastDetectedDateTime.toUtc().toIso8601String()));
       csvLine.write(r',');
-      csvLine.write(quoteCsvCell('1970-01-01T00:00:00.000Z'));
+      csvLine.write(quoteCsvCell(e.value.lastDetectedDbVersion));
       csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.value.detectedDateTime));
+      csvLine.write(quoteCsvCell(e.value.firstDetectedDbVersion));
       csvLine.write('\r\n');
       await resultStream.writeAsText(csvLine.toString());
     }

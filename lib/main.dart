@@ -258,8 +258,8 @@ Use exact matching with narmalized names to retreave the detected items.
 |6th|The best matched name of each detected item. Normalized.|
 |7th|The flag of checked. See the "White Results" section.|
 |8th|The Date/Time of screening.|
-|9th|The version of the database made from the Denial Lists.|
-|10th|The Date/Time of the first detection of the item with same name for screening, transaction ID, code of list, and best matched name of detected item. See the "White Results" section.|
+|9th|The version of the database from which this item is detected.|
+|10th|The version of the database from which the white result is detected. See the "White Results" section.|
 
 ## White Results
 
@@ -311,7 +311,9 @@ the result cache will be purged.
 
 ## The Web Service
 
-https://fms.catsushi.net/
+Free without authentification
+
+[JunoScreen](https://fms.catsushi.net/ "JunoScreen")
 
 ## This Web Client
 
