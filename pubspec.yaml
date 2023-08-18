@@ -39,13 +39,13 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_riverpod: ^2.1.1
   fmscreen: ^1.1.5
-  http: ^0.13.5
+  http: ^1.1.0
   scrollable_positioned_list: ^0.3.5
   url_launcher: ^6.1.7
   file_system_access_api: ^1.0.1
   window_location_href: ^1.0.1+2
   flutter_markdown: ^0.6.13
-  google_fonts: ^4.0.1
+  google_fonts: ^5.1.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -50,8 +50,8 @@ class SingleScreen extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return Container(
       margin: const EdgeInsets.all(8.0),
-      child: Column(
-        children: const <Widget>[
+      child: const Column(
+        children: <Widget>[
           QueryInputWidget(),
           SizedBox(height: 8.0),
           Expanded(
