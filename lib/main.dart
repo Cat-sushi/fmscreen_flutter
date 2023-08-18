@@ -274,7 +274,7 @@ A file of results from previous batch screening can be used as White Reults with
 
 Each detected item which is already listed in White Results with same name for screening, transaction ID,
 code of list, and best matched name of the item will be marked "true" in 7th column,
-and the 10th (the Date/Time of first detect) column will be copied from that of the item in the White Results.
+and the 10th column will be copied from that of the item in the White Results.
 ''',
   'lists': '''
 # Contained Denial Lists
