@@ -240,6 +240,7 @@ Future<void> runBatch(
   await printMessage('Start batch at: ${startTime.toUtc().toIso8601String()}',
       log: true);
 
+  await resultStream.writeAsText(resultCsvHeader);
   int queryCount = 0;
   for (var idx = 0; idx < names.length; idx += bulkSize) {
     var sublist = names.sublist(idx, min(idx + bulkSize, names.length));
