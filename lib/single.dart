@@ -1,4 +1,4 @@
-// Copyright 2022, 2023 Yako
+// Copyright 2022, 2024 Yako
 // This code is licensed under MIT license (see LICENSE for details)
 
 import 'dart:async';
@@ -65,8 +65,8 @@ class SingleScreen extends ConsumerWidget {
 
 class QueryInputWidget extends ConsumerWidget {
   const QueryInputWidget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, ref) {
@@ -91,8 +91,8 @@ class QueryInputWidget extends ConsumerWidget {
 
 class ScreeningResultWidget extends ConsumerWidget {
   const ScreeningResultWidget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, ref) {
@@ -137,8 +137,8 @@ class ScreeningResultWidget extends ConsumerWidget {
 class QueryStatusWidget extends ConsumerWidget {
   const QueryStatusWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -178,8 +178,8 @@ class QueryStatusWidget extends ConsumerWidget {
 class PreprocessedQueryWidget extends ConsumerWidget {
   const PreprocessedQueryWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -187,10 +187,6 @@ class PreprocessedQueryWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return Row(
       children: [
-        if (result.queryStatus.perfectMatching) PerfectMatchingWidget(result),
-        if (result.queryStatus.perfectMatching) const SizedBox(width: 8.0),
-        if (result.queryStatus.queryFallenBack) QueryFallenBackWidget(result),
-        if (result.queryStatus.queryFallenBack) const SizedBox(width: 8.0),
         const Text('Preprocessed: '),
         Expanded(
           child: Container(
@@ -207,6 +203,10 @@ class PreprocessedQueryWidget extends ConsumerWidget {
             ),
           ),
         ),
+        if (result.queryStatus.perfectMatching) const SizedBox(width: 8.0),
+        if (result.queryStatus.perfectMatching) PerfectMatchingWidget(result),
+        if (result.queryStatus.queryFallenBack) const SizedBox(width: 8.0),
+        if (result.queryStatus.queryFallenBack) QueryFallenBackWidget(result),
       ],
     );
   }
@@ -239,8 +239,8 @@ Iterable<TextSpan> spans(List<Term> terms, LetType letType) sync* {
 class PerfectMatchingWidget extends ConsumerWidget {
   const PerfectMatchingWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -253,8 +253,8 @@ class PerfectMatchingWidget extends ConsumerWidget {
 class QueryFallenBackWidget extends ConsumerWidget {
   const QueryFallenBackWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -267,8 +267,8 @@ class QueryFallenBackWidget extends ConsumerWidget {
 class QueryScoreWidget extends ConsumerWidget {
   const QueryScoreWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -296,8 +296,8 @@ class QueryScoreWidget extends ConsumerWidget {
 class QueryStartTimeWidget extends ConsumerWidget {
   const QueryStartTimeWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -325,8 +325,8 @@ class QueryStartTimeWidget extends ConsumerWidget {
 class QueryDurationWidget extends ConsumerWidget {
   const QueryDurationWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -353,8 +353,8 @@ class QueryDurationWidget extends ConsumerWidget {
 class DbVersionWidget extends ConsumerWidget {
   const DbVersionWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -382,8 +382,8 @@ class DbVersionWidget extends ConsumerWidget {
 class ServerIdWidget extends ConsumerWidget {
   const ServerIdWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -409,8 +409,8 @@ class ServerIdWidget extends ConsumerWidget {
 class ServerMessageWidget extends ConsumerWidget {
   const ServerMessageWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -439,8 +439,8 @@ class ServerMessageWidget extends ConsumerWidget {
 class DetctedItemsWidget extends ConsumerWidget {
   const DetctedItemsWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -495,9 +495,8 @@ class DetectedItemWidget extends ConsumerWidget {
   const DetectedItemWidget(
     this.result,
     index, {
-    Key? key,
-  })  : _index = index - 1,
-        super(key: key);
+    super.key,
+  })  : _index = index - 1;
 
   final ScreeningResult result;
 
@@ -590,8 +589,8 @@ class DetectedItemWidget extends ConsumerWidget {
 class DetectedItemsDetailWidget extends ConsumerWidget {
   const DetectedItemsDetailWidget(
     this.result, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
 
@@ -623,8 +622,8 @@ class DetectedItemDetailWidget extends ConsumerWidget {
   const DetectedItemDetailWidget(
     this.result,
     this._index, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
   final int _index;
@@ -685,8 +684,8 @@ class MatchedNamesWidget extends ConsumerWidget {
   const MatchedNamesWidget(
     this.result,
     this.index, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
   final int index;
@@ -755,8 +754,8 @@ class BodyWidget extends ConsumerWidget {
   const BodyWidget(
     this.result,
     this.index, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final ScreeningResult result;
   final int index;

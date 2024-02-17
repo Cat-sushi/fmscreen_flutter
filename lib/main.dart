@@ -1,4 +1,4 @@
-// Copyright 2022, 2023 Yako
+// Copyright 2022, 2024 Yako
 // This code is licensed under MIT license (see LICENSE for details)
 
 import 'package:flutter/foundation.dart';
@@ -92,8 +92,8 @@ class MyAppHome extends StatelessWidget {
 
 class MoreMenueWidiget extends StatelessWidget {
   const MoreMenueWidiget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

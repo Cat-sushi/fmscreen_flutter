@@ -42,17 +42,18 @@ dependencies:
   http: ^1.1.0
   scrollable_positioned_list: ^0.3.5
   url_launcher: ^6.1.7
-  file_system_access_api: ^1.0.1
+  file_system_access_api: ^2.0.0
   window_location_href: ^1.0.1+2
   flutter_markdown: ^0.6.13
-  google_fonts: ^5.1.0
+  google_fonts: ^6.1.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.1
+  web: ^0.5.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

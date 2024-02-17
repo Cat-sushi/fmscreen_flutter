@@ -1,4 +1,4 @@
-// Copyright 2022, 2023 Yako
+// Copyright 2022, 2024 Yako
 // This code is licensed under MIT license (see LICENSE for details)
 
 import 'dart:async';
@@ -115,7 +115,7 @@ class BatchScreen extends ConsumerWidget {
 }
 
 class StateWidget extends ConsumerWidget {
-  const StateWidget({Key? key}) : super(key: key);
+  const StateWidget({super.key});
 
   @override
   Widget build(BuildContext context, ref) {
@@ -218,6 +218,9 @@ Future<void> batchDirPick(WidgetRef ref) async {
     isRunningNotifier.end();
   }
 }
+
+const resultCsvHeader =
+    '"#","TxID","Name","Score","Code","Detected","Checked","Time","DB","Oldest DB"\r\n';
 
 Future<void> runBatch(
   WidgetRef ref,
@@ -418,6 +421,9 @@ Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
   List<List<String?>> csv,
 ) {
   var ret = <WhiteResultKey, WhiteResultValue>{};
+  if (csv.isNotEmpty && csv[0].isNotEmpty && csv[0][0] == '#') {
+    csv.removeAt(0);
+  }
   for (var row in csv) {
     if (row.length < 10) {
       continue;
