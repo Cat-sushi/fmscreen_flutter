@@ -95,8 +95,7 @@ class BatchScreen extends ConsumerWidget {
           child: Row(
             children: [
               ElevatedButton(
-                onPressed:
-                    isRunning ? null : () => unawaited(batchDirPick(ref)),
+                onPressed: isRunning ? null : () => batchDirPick(ref),
                 child: const Text('Select Batch Directory'),
               ),
               const SizedBox(width: 8.0),
@@ -134,9 +133,9 @@ class StateWidget extends ConsumerWidget {
 
 Future<void> batchDirPick(WidgetRef ref) async {
   messagesNotifier.clear();
-  isRunningNotifier.run();
 
   FileSystemDirectoryHandle dirHandle;
+  isRunningNotifier.run();
   try {
     dirHandle =
         await window.showDirectoryPicker(mode: PermissionMode.readwrite);
@@ -151,72 +150,66 @@ Future<void> batchDirPick(WidgetRef ref) async {
     } catch (e) {
       // OK
     }
+    List<List<String?>> names;
     await dirHandle.getFileHandle('lockfile', create: true);
-  } catch (e) {
-    isRunningNotifier.end();
-    return;
-  }
-
-  List<List<String?>> names;
-  try {
-    var namesHandle = (await dirHandle.getFileHandle('names.csv'));
-    var namesReader = FileReader()..readAsText(await namesHandle.getFile());
-    await namesReader.onLoadEnd.first;
-    names = parseCsvLines(namesReader.result as String);
-  } catch (e) {
-    await printMessage("\"names.csv\" can't be read.");
-    await dirHandle.removeEntry('lockfile');
-    isRunningNotifier.end();
-    return;
-  }
-
-  Map<WhiteResultKey, WhiteResultValue> whiteResults;
-  try {
-    var whiteHandle = (await dirHandle.getFileHandle('white_results.csv'));
-    var whiteReader = FileReader()..readAsText(await whiteHandle.getFile());
-    await whiteReader.onLoadEnd.first;
-    var csv = parseCsvLines(whiteReader.result as String);
-    whiteResults = buildWhiteResult(csv);
-  } catch (e) {
-    whiteResults = {};
-  }
-
-  FileSystemWritableFileStream resultStream;
-  try {
-    var resultHandle =
-        (await dirHandle.getFileHandle('results.csv', create: true));
-    resultStream = await resultHandle.createWritable();
-  } catch (e) {
-    await printMessage("\"result.csv\" can't be opened.");
-    await dirHandle.removeEntry('lockfile');
-    isRunningNotifier.end();
-    return;
-  }
-  await resultStream.writeAsArrayBuffer(Uint8List.fromList(utf8Bom));
-
-  try {
-    var logHandle = (await dirHandle.getFileHandle('log.txt', create: true));
-    logStream = await logHandle.createWritable();
-  } catch (e) {
-    await printMessage("\"log.txt\" can't be opened.");
-    await resultStream.close();
-    await dirHandle.removeEntry('lockfile');
-    isRunningNotifier.end();
-    return;
-  }
-
-  try {
-    await runBatch(ref, names, whiteResults, resultStream);
-    await dumpUnrefferredWhiteResults(whiteResults, resultStream);
+    try {
+      try {
+        var namesHandle = (await dirHandle.getFileHandle('names.csv'));
+        var namesReader = FileReader()..readAsText(await namesHandle.getFile());
+        await namesReader.onLoadEnd.first;
+        names = parseCsvLines(namesReader.result as String);
+      } catch (e) {
+        await printMessage("\"names.csv\" can't be read.");
+        return;
+      }
+      Map<WhiteResultKey, WhiteResultValue> whiteResults;
+      try {
+        var whiteHandle = (await dirHandle.getFileHandle('white_results.csv'));
+        var whiteReader = FileReader()..readAsText(await whiteHandle.getFile());
+        await whiteReader.onLoadEnd.first;
+        var csv = parseCsvLines(whiteReader.result as String);
+        whiteResults = buildWhiteResult(csv);
+      } catch (e) {
+        whiteResults = {};
+      }
+      FileSystemWritableFileStream resultStream;
+      try {
+        var resultHandle =
+            (await dirHandle.getFileHandle('results.csv', create: true));
+        resultStream = await resultHandle.createWritable();
+        try {
+          await resultStream.writeAsArrayBuffer(Uint8List.fromList(utf8Bom));
+          try {
+            var logHandle =
+                (await dirHandle.getFileHandle('log.txt', create: true));
+            logStream = await logHandle.createWritable();
+            try {
+              await runBatch(ref, names, whiteResults, resultStream);
+              await dumpUnrefferredWhiteResults(whiteResults, resultStream);
+              await printMessage(
+                  'Batch completed at: ${DateTime.now().toUtc().toIso8601String()}',
+                  log: true);
+            } finally {
+              await logStream!.close();
+            }
+          } catch (e) {
+            await printMessage("\"log.txt\" can't be opened.");
+            return;
+          }
+        } finally {
+          await resultStream.close();
+        }
+      } catch (e) {
+        await printMessage("\"result.csv\" can't be opened.");
+        return;
+      }
+    } finally {
+      await dirHandle.removeEntry('lockfile');
+    }
   } finally {
-    await resultStream.close();
-    await printMessage(
-        'Batch completed at: ${DateTime.now().toUtc().toIso8601String()}',
-        log: true);
-    await logStream!.close();
-    await dirHandle.removeEntry('lockfile');
     isRunningNotifier.end();
   }
+  return;
 }
 
 const resultCsvHeader =
