@@ -171,36 +171,36 @@ Future<void> batchDirPick(WidgetRef ref) async {
       } catch (e) {
         whiteResults = {};
       }
-      FileSystemWritableFileStream resultStream;
+      FileSystemFileHandle resultHandle;
       try {
-        var resultHandle =
-            (await dirHandle.getFileHandle('results.csv', create: true));
-        resultStream = await resultHandle.createWritable();
-        try {
-          await resultStream.writeAsArrayBuffer(Uint8List.fromList(utf8Bom));
-          try {
-            var logHandle =
-                (await dirHandle.getFileHandle('log.txt', create: true));
-            logStream = await logHandle.createWritable();
-            try {
-              await runBatch(ref, names, whiteResults, resultStream);
-              await dumpUnrefferredWhiteResults(whiteResults, resultStream);
-              await printMessage(
-                  'Batch completed at: ${DateTime.now().toUtc().toIso8601String()}',
-                  log: true);
-            } finally {
-              await logStream!.close();
-            }
-          } catch (e) {
-            await printMessage("\"log.txt\" can't be opened.");
-            return;
-          }
-        } finally {
-          await resultStream.close();
-        }
+        resultHandle =
+            await dirHandle.getFileHandle('results.csv', create: true);
       } catch (e) {
         await printMessage("\"result.csv\" can't be opened.");
         return;
+      }
+      var resultStream = await resultHandle.createWritable();
+      try {
+        await resultStream.writeAsArrayBuffer(Uint8List.fromList(utf8Bom));
+        FileSystemFileHandle logHandle;
+        try {
+          logHandle = await dirHandle.getFileHandle('log.txt', create: true);
+        } catch (e) {
+          await printMessage("\"log.txt\" can't be opened.");
+          return;
+        }
+        logStream = await logHandle.createWritable();
+        try {
+          await runBatch(ref, names, whiteResults, resultStream);
+          await dumpUnrefferredWhiteResults(whiteResults, resultStream);
+          await printMessage(
+              'Batch completed at: ${DateTime.now().toUtc().toIso8601String()}',
+              log: true);
+        } finally {
+          await logStream!.close();
+        }
+      } finally {
+        await resultStream.close();
       }
     } finally {
       await dirHandle.removeEntry('lockfile');
