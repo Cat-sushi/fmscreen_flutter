@@ -145,7 +145,6 @@ Future<void> batchDirPick(WidgetRef ref) async {
       await dirHandle.getFileHandle('lockfile');
       await printMessage(
           'Directory is Locked. If there is no batch running, remove "lockfile".');
-      isRunningNotifier.end();
       return;
     } catch (e) {
       // OK
