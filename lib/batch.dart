@@ -1,17 +1,19 @@
 // Copyright 2022, 2024 Yako
 // This code is licensed under MIT license (see LICENSE for details)
+@JS()
+library;
 
 import 'dart:async';
+import 'dart:js_interop';
 import 'dart:math';
 import 'dart:convert';
-import 'dart:html';
-import 'package:file_system_access_api/file_system_access_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmscreen/fmscreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:web/web.dart' as web;
 import 'main.dart';
 import 'src/util.dart';
 
@@ -45,7 +47,7 @@ Future<void> printMessage(String message, {bool log = false}) async {
   await messagesNotifier.print(message);
 
   if (log && logStream != null) {
-    await logStream!.writeAsText('$message\n');
+    await logStream!.write('$message\n'.toJS).toDart;
   }
 }
 
@@ -59,7 +61,7 @@ final isRunningNotifier = IsRunningNotifier();
 final isRunningProvider =
     StateNotifierProvider<IsRunningNotifier, bool>((ref) => isRunningNotifier);
 
-FileSystemWritableFileStream? logStream;
+web.FileSystemWritableFileStream? logStream;
 
 late DateTime startTime;
 late DateTime currentLap;
@@ -131,18 +133,29 @@ class StateWidget extends ConsumerWidget {
   }
 }
 
+extension on web.Window {
+  external JSPromise<web.FileSystemDirectoryHandle> showDirectoryPicker(
+      [JSAny? options]);
+}
+
+@JS()
+extension type Options._(JSObject _) implements JSObject {
+  external Options({String mode});
+}
+
 Future<void> batchDirPick(WidgetRef ref) async {
   messagesNotifier.clear();
 
-  FileSystemDirectoryHandle dirHandle;
+  web.FileSystemDirectoryHandle dirHandle;
   isRunningNotifier.run();
   try {
-    dirHandle =
-        await window.showDirectoryPicker(mode: PermissionMode.readwrite);
+    dirHandle = await web.window
+        .showDirectoryPicker(Options(mode: 'readwrite'))
+        .toDart;
     ref.read(batchDirNameProvider.notifier).state = dirHandle.name;
 
     try {
-      await dirHandle.getFileHandle('lockfile');
+      await dirHandle.getFileHandle('lockfile').toDart;
       await printMessage(
           'Directory is Locked. If there is no batch running, remove "lockfile".');
       return;
@@ -150,11 +163,14 @@ Future<void> batchDirPick(WidgetRef ref) async {
       // OK
     }
     List<List<String?>> names;
-    await dirHandle.getFileHandle('lockfile', create: true);
+    await dirHandle
+        .getFileHandle('lockfile', web.FileSystemGetFileOptions(create: true))
+        .toDart;
     try {
       try {
-        var namesHandle = (await dirHandle.getFileHandle('names.csv'));
-        var namesReader = FileReader()..readAsText(await namesHandle.getFile());
+        var namesHandle = await dirHandle.getFileHandle('names.csv').toDart;
+        var namesReader = web.FileReader()
+          ..readAsText(await namesHandle.getFile().toDart);
         await namesReader.onLoadEnd.first;
         names = parseCsvLines(namesReader.result as String);
       } catch (e) {
@@ -163,33 +179,40 @@ Future<void> batchDirPick(WidgetRef ref) async {
       }
       Map<WhiteResultKey, WhiteResultValue> whiteResults;
       try {
-        var whiteHandle = (await dirHandle.getFileHandle('white_results.csv'));
-        var whiteReader = FileReader()..readAsText(await whiteHandle.getFile());
+        var whiteHandle =
+            await dirHandle.getFileHandle('white_results.csv').toDart;
+        var whiteReader = web.FileReader()
+          ..readAsText(await whiteHandle.getFile().toDart);
         await whiteReader.onLoadEnd.first;
         var csv = parseCsvLines(whiteReader.result as String);
         whiteResults = buildWhiteResult(csv);
       } catch (e) {
         whiteResults = {};
       }
-      FileSystemFileHandle resultHandle;
+      web.FileSystemFileHandle resultHandle;
       try {
-        resultHandle =
-            await dirHandle.getFileHandle('results.csv', create: true);
+        resultHandle = await dirHandle
+            .getFileHandle(
+                'results.csv', web.FileSystemGetFileOptions(create: true))
+            .toDart;
       } catch (e) {
         await printMessage("\"result.csv\" can't be opened.");
         return;
       }
-      var resultStream = await resultHandle.createWritable();
+      var resultStream = await resultHandle.createWritable().toDart;
       try {
-        await resultStream.writeAsArrayBuffer(Uint8List.fromList(utf8Bom));
-        FileSystemFileHandle logHandle;
+        await resultStream.write(Uint8List.fromList(utf8Bom).toJS).toDart;
+        web.FileSystemFileHandle logHandle;
         try {
-          logHandle = await dirHandle.getFileHandle('log.txt', create: true);
+          logHandle = await dirHandle
+              .getFileHandle(
+                  'log.txt', web.FileSystemGetFileOptions(create: true))
+              .toDart;
         } catch (e) {
           await printMessage("\"log.txt\" can't be opened.");
           return;
         }
-        logStream = await logHandle.createWritable();
+        logStream = await logHandle.createWritable().toDart;
         try {
           await runBatch(ref, names, whiteResults, resultStream);
           await dumpUnrefferredWhiteResults(whiteResults, resultStream);
@@ -197,13 +220,13 @@ Future<void> batchDirPick(WidgetRef ref) async {
               'Batch completed at: ${DateTime.now().toUtc().toIso8601String()}',
               log: true);
         } finally {
-          await logStream!.close();
+          await logStream!.close().toDart;
         }
       } finally {
-        await resultStream.close();
+        await resultStream.close().toDart;
       }
     } finally {
-      await dirHandle.removeEntry('lockfile');
+      await dirHandle.removeEntry('lockfile').toDart;
     }
   } finally {
     isRunningNotifier.end();
@@ -218,7 +241,7 @@ Future<void> runBatch(
   WidgetRef ref,
   List<List<String?>> names,
   Map<WhiteResultKey, WhiteResultValue> whiteResults,
-  FileSystemWritableFileStream resultStream,
+  web.FileSystemWritableFileStream resultStream,
 ) async {
   startTime = DateTime.now();
   lastLap = startTime;
@@ -232,7 +255,7 @@ Future<void> runBatch(
   await printMessage('Start batch at: ${startTime.toUtc().toIso8601String()}',
       log: true);
 
-  await resultStream.writeAsText(resultCsvHeader);
+  await resultStream.write(resultCsvHeader.toJS).toDart;
   int queryCount = 0;
   for (var idx = 0; idx < names.length; idx += bulkSize) {
     var sublist = names.sublist(idx, min(idx + bulkSize, names.length));
@@ -295,7 +318,7 @@ Future<void> runBatch(
 
 Future<void> outputResults(
   WidgetRef ref,
-  FileSystemWritableFileStream resultStream,
+  web.FileSystemWritableFileStream resultStream,
   int idx,
   List<String> txids,
   List<ScreeningResult> results,
@@ -313,7 +336,8 @@ Future<void> outputResults(
       cacheHitCount2++;
     }
     await resultStream
-        .writeAsText(formatOutput(idx + i, txids[i], result, whiteResults));
+        .write(formatOutput(idx + i, txids[i], result, whiteResults).toJS)
+        .toDart;
     if (i == results.length - 1) {
       currentLap = DateTime.now();
       await printMessage(
@@ -451,7 +475,7 @@ Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
 
 Future<void> dumpUnrefferredWhiteResults(
   Map<WhiteResultKey, WhiteResultValue> whiteResults,
-  FileSystemWritableFileStream resultStream,
+  web.FileSystemWritableFileStream resultStream,
 ) async {
   for (var e in whiteResults.entries) {
     for (var i = 0; i < e.value.count; i++) {
@@ -477,7 +501,7 @@ Future<void> dumpUnrefferredWhiteResults(
       csvLine.write(r',');
       csvLine.write(quoteCsvCell(e.value.firstDetectedDbVersion));
       csvLine.write('\r\n');
-      await resultStream.writeAsText(csvLine.toString());
+      await resultStream.write(csvLine.toString().toJS).toDart;
     }
   }
 }
