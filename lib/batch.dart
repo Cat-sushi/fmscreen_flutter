@@ -1,8 +1,5 @@
 // Copyright 2022, 2024 Yako
 // This code is licensed under MIT license (see LICENSE for details)
-@JS()
-library;
-
 import 'dart:async';
 import 'dart:js_interop';
 import 'dart:math';
@@ -135,7 +132,7 @@ class StateWidget extends ConsumerWidget {
 
 extension on web.Window {
   external JSPromise<web.FileSystemDirectoryHandle> showDirectoryPicker(
-      [JSAny? options]);
+      [Options? options]);
 }
 
 @JS()
