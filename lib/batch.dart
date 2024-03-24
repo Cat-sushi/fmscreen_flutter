@@ -130,6 +130,38 @@ class StateWidget extends ConsumerWidget {
   }
 }
 
+class WhiteResultKey {
+  WhiteResultKey(this.txid, this.name, this.code, this.matchedName)
+      : hashCode = Object.hashAll([txid, name, code, matchedName]);
+  final String txid;
+  final String name;
+  final String code;
+  final String matchedName;
+  @override
+  final int hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      other is WhiteResultKey &&
+      txid == other.txid &&
+      name == other.name &&
+      code == other.code &&
+      matchedName == other.matchedName;
+}
+
+class WhiteResultValue {
+  WhiteResultValue(this.count, this.score, this.lastDetectedDateTime,
+      this.lastDetectedDbVersion, this.firstDetectedDbVersion);
+  int count;
+  final int score;
+  final DateTime lastDetectedDateTime;
+  final String lastDetectedDbVersion;
+  String firstDetectedDbVersion;
+}
+
+extension type WhiteResults(Map<WhiteResultKey, WhiteResultValue> _)
+    implements Map<WhiteResultKey, WhiteResultValue> {}
+
 extension on web.Window {
   external JSPromise<web.FileSystemDirectoryHandle> showDirectoryPicker(
       [Options? options]);
@@ -146,9 +178,8 @@ Future<void> batchDirPick(WidgetRef ref) async {
   web.FileSystemDirectoryHandle dirHandle;
   isRunningNotifier.run();
   try {
-    dirHandle = await web.window
-        .showDirectoryPicker(Options(mode: 'readwrite'))
-        .toDart;
+    dirHandle =
+        await web.window.showDirectoryPicker(Options(mode: 'readwrite')).toDart;
     ref.read(batchDirNameProvider.notifier).state = dirHandle.name;
 
     try {
@@ -159,7 +190,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
     } catch (e) {
       // OK
     }
-    List<List<String?>> names;
+    Csv names;
     await dirHandle
         .getFileHandle('lockfile', web.FileSystemGetFileOptions(create: true))
         .toDart;
@@ -174,7 +205,7 @@ Future<void> batchDirPick(WidgetRef ref) async {
         await printMessage("\"names.csv\" can't be read.");
         return;
       }
-      Map<WhiteResultKey, WhiteResultValue> whiteResults;
+      WhiteResults whiteResults;
       try {
         var whiteHandle =
             await dirHandle.getFileHandle('white_results.csv').toDart;
@@ -182,9 +213,9 @@ Future<void> batchDirPick(WidgetRef ref) async {
           ..readAsText(await whiteHandle.getFile().toDart);
         await whiteReader.onLoadEnd.first;
         var csv = parseCsvLines(whiteReader.result as String);
-        whiteResults = buildWhiteResult(csv);
+        whiteResults = buildWhiteResults(csv);
       } catch (e) {
-        whiteResults = {};
+        whiteResults = WhiteResults({});
       }
       web.FileSystemFileHandle resultHandle;
       try {
@@ -402,39 +433,10 @@ String formatOutput(
   return csvLine.toString();
 }
 
-class WhiteResultKey {
-  WhiteResultKey(this.txid, this.name, this.code, this.matchedName)
-      : hashCode = Object.hashAll([txid, name, code, matchedName]);
-  final String txid;
-  final String name;
-  final String code;
-  final String matchedName;
-  @override
-  final int hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      other is WhiteResultKey &&
-      txid == other.txid &&
-      name == other.name &&
-      code == other.code &&
-      matchedName == other.matchedName;
-}
-
-class WhiteResultValue {
-  WhiteResultValue(this.count, this.score, this.lastDetectedDateTime,
-      this.lastDetectedDbVersion, this.firstDetectedDbVersion);
-  int count;
-  final int score;
-  final DateTime lastDetectedDateTime;
-  final String lastDetectedDbVersion;
-  String firstDetectedDbVersion;
-}
-
-Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
+WhiteResults buildWhiteResults(
   List<List<String?>> csv,
 ) {
-  var ret = <WhiteResultKey, WhiteResultValue>{};
+  var ret = WhiteResults({});
   if (csv.isNotEmpty && csv[0].isNotEmpty && csv[0][0] == '#') {
     csv.removeAt(0);
   }
@@ -471,33 +473,33 @@ Map<WhiteResultKey, WhiteResultValue> buildWhiteResult(
 }
 
 Future<void> dumpUnrefferredWhiteResults(
-  Map<WhiteResultKey, WhiteResultValue> whiteResults,
+  WhiteResults whiteResults,
   web.FileSystemWritableFileStream resultStream,
 ) async {
   for (var e in whiteResults.entries) {
+    var csvLine = StringBuffer();
+    csvLine.write(0);
+    csvLine.write(r',');
+    csvLine.write(quoteCsvCell(e.key.txid));
+    csvLine.write(r',');
+    csvLine.write(quoteCsvCell(e.key.name));
+    csvLine.write(r',');
+    csvLine.write(e.value.score.toString());
+    csvLine.write(r',');
+    csvLine.write(quoteCsvCell(e.key.code));
+    csvLine.write(r',');
+    csvLine.write(quoteCsvCell(e.key.matchedName));
+    csvLine.write(r',');
+    csvLine.write('true');
+    csvLine.write(r',');
+    csvLine.write(
+        quoteCsvCell(e.value.lastDetectedDateTime.toUtc().toIso8601String()));
+    csvLine.write(r',');
+    csvLine.write(quoteCsvCell(e.value.lastDetectedDbVersion));
+    csvLine.write(r',');
+    csvLine.write(quoteCsvCell(e.value.firstDetectedDbVersion));
+    csvLine.write('\r\n');
     for (var i = 0; i < e.value.count; i++) {
-      var csvLine = StringBuffer();
-      csvLine.write(0);
-      csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.key.txid));
-      csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.key.name));
-      csvLine.write(r',');
-      csvLine.write(e.value.score.toString());
-      csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.key.code));
-      csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.key.matchedName));
-      csvLine.write(r',');
-      csvLine.write('true');
-      csvLine.write(r',');
-      csvLine.write(
-          quoteCsvCell(e.value.lastDetectedDateTime.toUtc().toIso8601String()));
-      csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.value.lastDetectedDbVersion));
-      csvLine.write(r',');
-      csvLine.write(quoteCsvCell(e.value.firstDetectedDbVersion));
-      csvLine.write('\r\n');
       await resultStream.write(csvLine.toString().toJS).toDart;
     }
   }

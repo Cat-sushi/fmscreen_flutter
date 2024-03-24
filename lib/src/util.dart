@@ -10,12 +10,14 @@ final _lineSpritter = RegExp(r'\r\n|\r|\n', unicode: true);
 
 const utf8Bom = [0xEF, 0xBB, 0xBF];
 
-List<List<String?>> parseCsvLines(String file) {
+extension type Csv(List<List<String?>> _) implements List<List<String?>> {}
+
+Csv parseCsvLines(String file) {
   var lines = file.split(_lineSpritter);
   if(lines.last == '') {
     lines = lines.sublist(0, lines.length - 1);
   }
-  var buff = <List<String?>>[];
+  var buff = Csv([]);
   var row = '';
   for (var line in lines) {
     if (row != '') {
